@@ -6,9 +6,8 @@ import models
 
 # Track how many times each person has looked at each shelf
 repeat_visits = {}  # {(track_id, shelf_name): visit_count}
+
 # Fetch actual shelves from database to map zones to real shelf names
-# Track continuous dwell time per shelf to infer interaction type
-shelf_dwell_start = {}  # {(track_id, shelf): start_time}
 db_init = SessionLocal()
 shelves_in_db = db_init.query(models.Shelf).all()
 db_init.close()
@@ -51,8 +50,9 @@ def get_zone(center_x, frame_width):
 
 print("Unified tracking started. Press 'q' to quit.")
 
-# Track state per person: zone, attention status, and how long in current state
-person_state = {}  # {id: {"zone": ..., "attention": ..., "state_start_time": ...}}
+person_state = {}
+pending_state = {}
+DEBOUNCE_SECONDS = 0.8
 
 while True:
     ret, frame = cap.read()
@@ -62,11 +62,9 @@ while True:
     frame = cv2.flip(frame, 1)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # Step 1: YOLO person detection + tracking
     results = yolo_model.track(frame, persist=True, verbose=False, classes=[0])
     annotated_frame = results[0].plot()
 
-    # Step 2: Face/eye detection (overall attention in frame)
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
     attention_status = "Looking Away"
     for (fx, fy, fw, fh) in faces:
@@ -74,9 +72,8 @@ while True:
         eyes = eye_cascade.detectMultiScale(face_gray, scaleFactor=1.1, minNeighbors=5)
         if len(eyes) >= 2:
             attention_status = "Attentive"
-        break  # just use the first detected face for simplicity
+        break
 
-    # Step 3: Combine with YOLO tracking IDs and zones
     if results[0].boxes.id is not None:
         for box, track_id in zip(results[0].boxes.xyxy, results[0].boxes.id):
             x1, y1, x2, y2 = box.tolist()
@@ -90,10 +87,21 @@ while True:
                     "attention": attention_status,
                     "state_start_time": time.time()
                 }
+                pending_state[track_id] = {"zone": zone, "attention": attention_status, "since": time.time()}
             else:
-                # If zone or attention changed, log the previous state duration
                 prev = person_state[track_id]
-                if prev["zone"] != zone or prev["attention"] != attention_status:
+                pending = pending_state.get(track_id)
+
+                if pending and pending["zone"] == zone and pending["attention"] == attention_status:
+                    if time.time() - pending["since"] >= DEBOUNCE_SECONDS and (prev["zone"] != zone or prev["attention"] != attention_status):
+                        confirm_change = True
+                    else:
+                        confirm_change = False
+                else:
+                    pending_state[track_id] = {"zone": zone, "attention": attention_status, "since": time.time()}
+                    confirm_change = False
+
+                if confirm_change:
                     duration = time.time() - prev["state_start_time"]
 
                     db = SessionLocal()
@@ -107,39 +115,53 @@ while True:
                     db.commit()
                     db.close()
 
-                    # Track repeat visits to the same shelf/zone
                     key = (track_id, prev["zone"])
                     repeat_visits[key] = repeat_visits.get(key, 0) + 1
 
                     print(f"Person {track_id}: {prev['attention']} in {prev['zone']} for {duration:.1f}s (visit #{repeat_visits[key]})")
-                    # Infer interaction type based on how long they were attentive at this shelf
+
+                    # Infer interaction type
+                    prior_visits_to_shelf = repeat_visits.get(key, 0)
+                    zones_visited_by_person = set(
+                        z for (pid, z) in repeat_visits.keys() if pid == track_id
+                    )
+
+                    interaction_type = None
+
                     if prev["attention"] == "Attentive":
-                        if duration >= 3:
-                            interaction_type = "Picked Up (simulated - long engagement)"
+                        if duration >= 6:
+                            interaction_type = "Product Purchased (simulated - very long engagement)"
+                        elif duration >= 3:
+                            interaction_type = "Product Picked Up (simulated)"
                         elif duration >= 1:
                             interaction_type = "Product Viewed"
-                        else:
-                            interaction_type = None
 
-                        if interaction_type:
-                            db2 = SessionLocal()
-                            interaction = models.ProductInteraction(
-                                person_track_id=track_id,
-                                shelf_zone=prev["zone"],
-                                interaction_type=interaction_type,
-                                duration_seconds=int(duration)
-                            )
-                            db2.add(interaction)
-                            db2.commit()
-                            db2.close()
-                            print(f"  --> Interaction logged: {interaction_type}")
+                        if len(zones_visited_by_person) >= 2 and prior_visits_to_shelf >= 2:
+                            interaction_type = "Product Compared (simulated - multiple shelf revisits)"
+
+                    elif prev["attention"] == "Looking Away" and prior_visits_to_shelf >= 2 and duration < 2:
+                        interaction_type = "Product Returned (simulated - quick disengagement)"
+
+                    # This save now runs for ANY interaction_type - Viewed, Picked Up, Purchased, Compared, Returned
+                    if interaction_type:
+                        db2 = SessionLocal()
+                        interaction = models.ProductInteraction(
+                            person_track_id=track_id,
+                            shelf_zone=prev["zone"],
+                            interaction_type=interaction_type,
+                            duration_seconds=int(duration)
+                        )
+                        db2.add(interaction)
+                        db2.commit()
+                        db2.close()
+                        print(f"  --> Interaction logged: {interaction_type}")
+
                     person_state[track_id] = {
                         "zone": zone,
                         "attention": attention_status,
                         "state_start_time": time.time()
                     }
 
-    # Draw zone lines
     cv2.line(annotated_frame, (frame_width // 3, 0), (frame_width // 3, frame.shape[0]), (255, 255, 0), 2)
     cv2.line(annotated_frame, (2 * frame_width // 3, 0), (2 * frame_width // 3, frame.shape[0]), (255, 255, 0), 2)
 
@@ -154,7 +176,6 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
-# Save final states when quitting
 db = SessionLocal()
 for track_id, state in person_state.items():
     duration = time.time() - state["state_start_time"]
