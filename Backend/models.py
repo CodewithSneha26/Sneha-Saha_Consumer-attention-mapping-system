@@ -72,3 +72,12 @@ class JourneyLog(Base):
     zone = Column(String, nullable=False)
     sequence_number = Column(Integer, nullable=False)  # order in which this zone was visited
     entered_at = Column(String, default=lambda: datetime.now().isoformat())
+
+class PositionPoint(Base):
+    __tablename__ = "position_points"
+
+    id = Column(Integer, primary_key=True, index=True)
+    person_track_id = Column(Integer, nullable=False)
+    x = Column(Integer, nullable=False)
+    y = Column(Integer, nullable=False)
+    recorded_at = Column(String, default=lambda: datetime.now().isoformat())

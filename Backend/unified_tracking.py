@@ -81,6 +81,18 @@ while True:
             track_id = int(track_id)
             zone = get_zone(center_x, frame_width)
 
+            center_y = (y1 + y2) / 2
+
+            # Save this position point for heatmap generation (lightweight, just x/y)
+            db_pos = SessionLocal()
+            point = models.PositionPoint(
+                person_track_id=track_id,
+                x=int(center_x),
+                y=int(center_y)
+            )
+            db_pos.add(point)
+            db_pos.commit()
+            db_pos.close()
             if track_id not in person_state:
                 person_state[track_id] = {
                     "zone": zone,
