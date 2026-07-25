@@ -9,3 +9,7 @@ Backend/venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# YOLO model and outputs
+Backend/yolov8n.pt
+runs/
