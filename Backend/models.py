@@ -53,3 +53,13 @@ class AttentionRecord(Base):
     attention_status = Column(String, nullable=False)
     duration_seconds = Column(Integer, nullable=False)
     created_at = Column(String, default=lambda: datetime.now().isoformat())
+
+class ProductInteraction(Base):
+    __tablename__ = "product_interactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    person_track_id = Column(Integer, nullable=False)
+    shelf_zone = Column(String, nullable=False)
+    interaction_type = Column(String, nullable=False)  # "Viewed", "Picked Up" (simulated)
+    duration_seconds = Column(Integer, nullable=False)
+    created_at = Column(String, default=lambda: datetime.now().isoformat())

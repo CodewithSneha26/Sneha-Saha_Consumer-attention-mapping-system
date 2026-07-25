@@ -7,6 +7,8 @@ import models
 # Track how many times each person has looked at each shelf
 repeat_visits = {}  # {(track_id, shelf_name): visit_count}
 # Fetch actual shelves from database to map zones to real shelf names
+# Track continuous dwell time per shelf to infer interaction type
+shelf_dwell_start = {}  # {(track_id, shelf): start_time}
 db_init = SessionLocal()
 shelves_in_db = db_init.query(models.Shelf).all()
 db_init.close()
@@ -110,7 +112,27 @@ while True:
                     repeat_visits[key] = repeat_visits.get(key, 0) + 1
 
                     print(f"Person {track_id}: {prev['attention']} in {prev['zone']} for {duration:.1f}s (visit #{repeat_visits[key]})")
+                    # Infer interaction type based on how long they were attentive at this shelf
+                    if prev["attention"] == "Attentive":
+                        if duration >= 3:
+                            interaction_type = "Picked Up (simulated - long engagement)"
+                        elif duration >= 1:
+                            interaction_type = "Product Viewed"
+                        else:
+                            interaction_type = None
 
+                        if interaction_type:
+                            db2 = SessionLocal()
+                            interaction = models.ProductInteraction(
+                                person_track_id=track_id,
+                                shelf_zone=prev["zone"],
+                                interaction_type=interaction_type,
+                                duration_seconds=int(duration)
+                            )
+                            db2.add(interaction)
+                            db2.commit()
+                            db2.close()
+                            print(f"  --> Interaction logged: {interaction_type}")
                     person_state[track_id] = {
                         "zone": zone,
                         "attention": attention_status,
