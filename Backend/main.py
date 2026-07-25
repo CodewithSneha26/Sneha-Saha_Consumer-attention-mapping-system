@@ -1,3 +1,7 @@
+from fastapi import UploadFile, File
+import shutil
+import os
+import detection
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import engine, Base, SessionLocal
@@ -105,4 +109,19 @@ def create_camera(camera: schemas.CameraCreate, db: Session = Depends(get_db)):
 def get_cameras(db: Session = Depends(get_db)):
     cameras = db.query(models.Camera).all()
     return cameras
+
+@app.post("/detect-people")
+def detect_people_endpoint(file: UploadFile = File(...)):
+    # Save the uploaded image temporarily
+    upload_folder = "uploaded_images"
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    file_path = os.path.join(upload_folder, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Run detection
+    result = detection.detect_people(file_path)
+    
+    return result
 

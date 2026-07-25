@@ -13,3 +13,6 @@ Thumbs.db
 # YOLO model and outputs
 Backend/yolov8n.pt
 runs/
+
+# Uploaded images (temporary)
+Backend/uploaded_images/
