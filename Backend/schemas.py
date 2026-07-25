@@ -48,3 +48,17 @@ class ShelfResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CameraCreate(BaseModel):
+    store_id: int
+    camera_name: str
+    location_description: str | None = None
+
+class CameraResponse(BaseModel):
+    id: int
+    store_id: int
+    camera_name: str
+    location_description: str | None
+
+    class Config:
+        from_attributes = True

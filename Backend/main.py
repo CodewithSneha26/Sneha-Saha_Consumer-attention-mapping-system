@@ -84,3 +84,25 @@ def create_shelf(shelf: schemas.ShelfCreate, db: Session = Depends(get_db)):
 def get_shelves(db: Session = Depends(get_db)):
     shelves = db.query(models.Shelf).all()
     return shelves
+
+@app.post("/cameras", response_model=schemas.CameraResponse)
+def create_camera(camera: schemas.CameraCreate, db: Session = Depends(get_db)):
+    store = db.query(models.Store).filter(models.Store.id == camera.store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+
+    new_camera = models.Camera(
+        store_id=camera.store_id,
+        camera_name=camera.camera_name,
+        location_description=camera.location_description
+    )
+    db.add(new_camera)
+    db.commit()
+    db.refresh(new_camera)
+    return new_camera
+
+@app.get("/cameras", response_model=list[schemas.CameraResponse])
+def get_cameras(db: Session = Depends(get_db)):
+    cameras = db.query(models.Camera).all()
+    return cameras
+
