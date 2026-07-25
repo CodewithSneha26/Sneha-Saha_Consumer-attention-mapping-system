@@ -21,4 +21,30 @@ class UserLogin(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str       
+    token_type: str
+
+class StoreCreate(BaseModel):
+    name: str
+    location: str
+
+class StoreResponse(BaseModel):
+    id: int
+    name: str
+    location: str
+
+    class Config:
+        from_attributes = True
+
+class ShelfCreate(BaseModel):
+    store_id: int
+    shelf_name: str
+    zone: str | None = None
+
+class ShelfResponse(BaseModel):
+    id: int
+    store_id: int
+    shelf_name: str
+    zone: str | None
+
+    class Config:
+        from_attributes = True

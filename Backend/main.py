@@ -47,3 +47,40 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     
     access_token = auth.create_access_token(data={"sub": db_user.email, "role": db_user.role})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/stores", response_model=schemas.StoreResponse)
+def create_store(store: schemas.StoreCreate, db: Session = Depends(get_db)):
+    new_store = models.Store(
+        name=store.name,
+        location=store.location
+    )
+    db.add(new_store)
+    db.commit()
+    db.refresh(new_store)
+    return new_store
+
+@app.get("/stores", response_model=list[schemas.StoreResponse])
+def get_stores(db: Session = Depends(get_db)):
+    stores = db.query(models.Store).all()
+    return stores
+
+@app.post("/shelves", response_model=schemas.ShelfResponse)
+def create_shelf(shelf: schemas.ShelfCreate, db: Session = Depends(get_db)):
+    store = db.query(models.Store).filter(models.Store.id == shelf.store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+
+    new_shelf = models.Shelf(
+        store_id=shelf.store_id,
+        shelf_name=shelf.shelf_name,
+        zone=shelf.zone
+    )
+    db.add(new_shelf)
+    db.commit()
+    db.refresh(new_shelf)
+    return new_shelf
+
+@app.get("/shelves", response_model=list[schemas.ShelfResponse])
+def get_shelves(db: Session = Depends(get_db)):
+    shelves = db.query(models.Shelf).all()
+    return shelves
