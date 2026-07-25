@@ -1,3 +1,7 @@
+from database import SessionLocal, engine, Base
+import models
+
+Base.metadata.create_all(bind=engine)
 import cv2
 from ultralytics import YOLO
 import time
@@ -46,8 +50,21 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
-# After closing, print summary for each tracked person
+# Save tracking summary to database
+db = SessionLocal()
+
 print("\n--- Tracking Summary ---")
 for person_id, positions in tracking_data.items():
     duration = positions[-1]["timestamp"] - positions[0]["timestamp"]
     print(f"Person ID {person_id}: tracked for {duration:.1f} seconds, {len(positions)} position points recorded")
+
+    session_record = models.DetectionSession(
+        person_track_id=person_id,
+        dwell_time_seconds=int(duration),
+        positions_recorded=len(positions)
+    )
+    db.add(session_record)
+
+db.commit()
+db.close()
+print("\nData saved to database successfully!")

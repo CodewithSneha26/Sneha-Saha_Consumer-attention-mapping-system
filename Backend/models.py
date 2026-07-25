@@ -32,3 +32,14 @@ class Camera(Base):
     store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
     camera_name = Column(String, nullable=False)
     location_description = Column(String, nullable=True)
+
+from datetime import datetime
+
+class DetectionSession(Base):
+    __tablename__ = "detection_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    person_track_id = Column(Integer, nullable=False)
+    dwell_time_seconds = Column(Integer, nullable=False)
+    positions_recorded = Column(Integer, nullable=False)
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
