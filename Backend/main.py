@@ -1,3 +1,4 @@
+import behavior_analysis
 from fastapi import UploadFile, File
 import shutil
 import os
@@ -123,5 +124,10 @@ def detect_people_endpoint(file: UploadFile = File(...)):
     # Run detection
     result = detection.detect_people(file_path)
     
+    return result
+
+@app.get("/behavior-analysis/{track_id}")
+def get_behavior_analysis(track_id: int, db: Session = Depends(get_db)):
+    result = behavior_analysis.classify_shopper(track_id, db)
     return result
 

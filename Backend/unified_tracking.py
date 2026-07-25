@@ -6,7 +6,7 @@ import models
 
 # Track how many times each person has looked at each shelf
 repeat_visits = {}  # {(track_id, shelf_name): visit_count}
-
+journey_sequence = {}  # {track_id: current_sequence_number}
 # Fetch actual shelves from database to map zones to real shelf names
 db_init = SessionLocal()
 shelves_in_db = db_init.query(models.Shelf).all()
@@ -120,6 +120,18 @@ while True:
 
                     print(f"Person {track_id}: {prev['attention']} in {prev['zone']} for {duration:.1f}s (visit #{repeat_visits[key]})")
 
+                    # Log journey step only when zone actually changes (not just attention flip)
+                    if prev["zone"] != zone:
+                        journey_sequence[track_id] = journey_sequence.get(track_id, 0) + 1
+                        db3 = SessionLocal()
+                        journey_step = models.JourneyLog(
+                            person_track_id=track_id,
+                            zone=zone,
+                            sequence_number=journey_sequence[track_id]
+                        )
+                        db3.add(journey_step)
+                        db3.commit()
+                        db3.close()
                     # Infer interaction type
                     prior_visits_to_shelf = repeat_visits.get(key, 0)
                     zones_visited_by_person = set(

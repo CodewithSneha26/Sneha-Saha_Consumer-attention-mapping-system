@@ -63,3 +63,12 @@ class ProductInteraction(Base):
     interaction_type = Column(String, nullable=False)  # "Viewed", "Picked Up" (simulated)
     duration_seconds = Column(Integer, nullable=False)
     created_at = Column(String, default=lambda: datetime.now().isoformat())
+
+class JourneyLog(Base):
+    __tablename__ = "journey_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    person_track_id = Column(Integer, nullable=False)
+    zone = Column(String, nullable=False)
+    sequence_number = Column(Integer, nullable=False)  # order in which this zone was visited
+    entered_at = Column(String, default=lambda: datetime.now().isoformat())
