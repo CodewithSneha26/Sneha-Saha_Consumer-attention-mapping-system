@@ -4,6 +4,26 @@ import time
 from database import SessionLocal, engine, Base
 import models
 
+# Track how many times each person has looked at each shelf
+repeat_visits = {}  # {(track_id, shelf_name): visit_count}
+# Fetch actual shelves from database to map zones to real shelf names
+db_init = SessionLocal()
+shelves_in_db = db_init.query(models.Shelf).all()
+db_init.close()
+
+# Map our 3 camera zones to real shelf names (if available), else use generic names
+zone_to_shelf = {}
+if len(shelves_in_db) >= 3:
+    zone_to_shelf["Zone A (Left)"] = shelves_in_db[0].shelf_name
+    zone_to_shelf["Zone B (Middle)"] = shelves_in_db[1].shelf_name
+    zone_to_shelf["Zone C (Right)"] = shelves_in_db[2].shelf_name
+else:
+    zone_to_shelf["Zone A (Left)"] = "Zone A (Left)"
+    zone_to_shelf["Zone B (Middle)"] = "Zone B (Middle)"
+    zone_to_shelf["Zone C (Right)"] = "Zone C (Right)"
+
+print(f"Zone-to-shelf mapping: {zone_to_shelf}")
+
 Base.metadata.create_all(bind=engine)
 
 # Load models
@@ -20,11 +40,12 @@ frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 
 def get_zone(center_x, frame_width):
     if center_x < frame_width / 3:
-        return "Zone A (Left)"
+        raw_zone = "Zone A (Left)"
     elif center_x < 2 * frame_width / 3:
-        return "Zone B (Middle)"
+        raw_zone = "Zone B (Middle)"
     else:
-        return "Zone C (Right)"
+        raw_zone = "Zone C (Right)"
+    return zone_to_shelf.get(raw_zone, raw_zone)
 
 print("Unified tracking started. Press 'q' to quit.")
 
@@ -84,7 +105,11 @@ while True:
                     db.commit()
                     db.close()
 
-                    print(f"Person {track_id}: {prev['attention']} in {prev['zone']} for {duration:.1f}s")
+                    # Track repeat visits to the same shelf/zone
+                    key = (track_id, prev["zone"])
+                    repeat_visits[key] = repeat_visits.get(key, 0) + 1
+
+                    print(f"Person {track_id}: {prev['attention']} in {prev['zone']} for {duration:.1f}s (visit #{repeat_visits[key]})")
 
                     person_state[track_id] = {
                         "zone": zone,
