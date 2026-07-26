@@ -68,8 +68,21 @@ def calculate_shelf_scores():
             repeat_rate * 0.05
         )
 
+        # Marketing effectiveness: how well repeat/comparison behavior converts to purchases
+        marketing_effectiveness = (
+            (data["purchased_count"] / data["compared_count"] * 100)
+            if data["compared_count"] > 0 else 0
+        )
+
         scores[shelf] = {
             "attractiveness_score": round(final_score, 2),
+
+            # Individual component scores (Module 8's separate requirements)
+            "shelf_visibility_score": round(attention_score, 2),       # based on attention duration
+            "engagement_score": round(interaction_freq_score, 2),      # based on interaction frequency
+            "conversion_potential_score": round(conversion_rate, 2),   # based on purchase rate
+            "marketing_effectiveness_score": round(marketing_effectiveness, 2),
+
             "attention_duration_seconds": data["total_attention_time"],
             "total_interactions": data["total_interactions"],
             "picked_up_count": data["picked_up_count"],
@@ -89,8 +102,10 @@ if __name__ == "__main__":
     
     for rank, (shelf, data) in enumerate(sorted_shelves, start=1):
         print(f"#{rank}: {shelf}")
-        print(f"   Attractiveness Score: {data['attractiveness_score']}/100")
-        print(f"   Attention Duration: {data['attention_duration_seconds']}s")
-        print(f"   Total Interactions: {data['total_interactions']}")
-        print(f"   Picked Up: {data['picked_up_count']} | Purchased: {data['purchased_count']} | Compared: {data['compared_count']}")
+        print(f"   Overall Attractiveness Score: {data['attractiveness_score']}/100")
+        print(f"   - Shelf Visibility Score: {data['shelf_visibility_score']}")
+        print(f"   - Engagement Score: {data['engagement_score']}")
+        print(f"   - Conversion Potential Score: {data['conversion_potential_score']}")
+        print(f"   - Marketing Effectiveness Score: {data['marketing_effectiveness_score']}")
+        print(f"   Attention Duration: {data['attention_duration_seconds']}s | Interactions: {data['total_interactions']}")
         print()
