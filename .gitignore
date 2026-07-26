@@ -19,3 +19,6 @@ Backend/uploaded_images/
 
 # Large model files (not needed in repo)
 Backend/face_landmarker.task
+
+# Generated reports (regeneratable, not needed in repo)
+Backend/generated_reports/

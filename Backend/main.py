@@ -1,3 +1,5 @@
+from fastapi.responses import FileResponse
+import reports_engine
 import alert_engine
 import recommendation_engine
 import scoring_engine
@@ -152,4 +154,14 @@ def run_alert_check():
 def get_all_alerts(db: Session = Depends(get_db)):
     alerts = db.query(models.Alert).order_by(models.Alert.created_at.desc()).all()
     return alerts
+
+@app.get("/reports/pdf")
+def download_pdf_report():
+    filepath = reports_engine.generate_pdf_report()
+    return FileResponse(filepath, media_type="application/pdf", filename="consumer_attention_report.pdf")
+
+@app.get("/reports/excel")
+def download_excel_report():
+    filepath = reports_engine.generate_excel_report()
+    return FileResponse(filepath, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="consumer_attention_report.xlsx")
 
