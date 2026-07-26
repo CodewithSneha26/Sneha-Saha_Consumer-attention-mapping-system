@@ -1,3 +1,4 @@
+import alert_engine
 import recommendation_engine
 import scoring_engine
 import behavior_analysis
@@ -141,4 +142,14 @@ def get_shelf_scores():
 @app.get("/recommendations")
 def get_recommendations():
     return recommendation_engine.generate_recommendations()
+
+@app.post("/alerts/run-check")
+def run_alert_check():
+    alerts = alert_engine.run_all_checks_and_save()
+    return {"alerts_generated": len(alerts), "alerts": alerts}
+
+@app.get("/alerts")
+def get_all_alerts(db: Session = Depends(get_db)):
+    alerts = db.query(models.Alert).order_by(models.Alert.created_at.desc()).all()
+    return alerts
 

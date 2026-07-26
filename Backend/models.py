@@ -81,3 +81,14 @@ class PositionPoint(Base):
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
     recorded_at = Column(String, default=lambda: datetime.now().isoformat())
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    alert_type = Column(String, nullable=False)  # e.g. "Shelf Performance", "Camera Health"
+    severity = Column(String, nullable=False)     # "Low", "Medium", "High", "Critical"
+    message = Column(String, nullable=False)
+    related_shelf = Column(String, nullable=True)
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+    resolved = Column(String, default="false")   # "true"/"false" as string for simplicity
