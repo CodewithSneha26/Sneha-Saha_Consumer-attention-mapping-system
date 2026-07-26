@@ -1,3 +1,4 @@
+from pydantic import BaseModel, EmailStr, ConfigDict
 from pydantic import BaseModel, EmailStr
 
 class UserCreate(BaseModel):
@@ -12,8 +13,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -32,8 +32,7 @@ class StoreResponse(BaseModel):
     name: str
     location: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ShelfCreate(BaseModel):
     store_id: int
@@ -46,8 +45,7 @@ class ShelfResponse(BaseModel):
     shelf_name: str
     zone: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CameraCreate(BaseModel):
     store_id: int
@@ -60,5 +58,4 @@ class CameraResponse(BaseModel):
     camera_name: str
     location_description: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
