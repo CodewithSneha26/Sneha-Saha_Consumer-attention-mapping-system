@@ -1,3 +1,4 @@
+import recommendation_engine
 import scoring_engine
 import behavior_analysis
 from fastapi import UploadFile, File
@@ -136,4 +137,8 @@ def get_behavior_analysis(track_id: int, db: Session = Depends(get_db)):
 def get_shelf_scores():
     scores = scoring_engine.calculate_shelf_scores()
     return scores
+
+@app.get("/recommendations")
+def get_recommendations():
+    return recommendation_engine.generate_recommendations()
 
