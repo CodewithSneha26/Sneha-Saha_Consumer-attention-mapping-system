@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.env
+uploaded_images/
+generated_reports/
+runs/
+test_images/
+.git
