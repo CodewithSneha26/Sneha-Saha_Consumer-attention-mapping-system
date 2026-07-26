@@ -1,3 +1,4 @@
+import scoring_engine
 import behavior_analysis
 from fastapi import UploadFile, File
 import shutil
@@ -130,4 +131,9 @@ def detect_people_endpoint(file: UploadFile = File(...)):
 def get_behavior_analysis(track_id: int, db: Session = Depends(get_db)):
     result = behavior_analysis.classify_shopper(track_id, db)
     return result
+
+@app.get("/shelf-scores")
+def get_shelf_scores():
+    scores = scoring_engine.calculate_shelf_scores()
+    return scores
 
