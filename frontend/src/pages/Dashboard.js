@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import Navbar from '../components/Navbar';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -26,17 +27,9 @@ function Dashboard() {
       });
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <h1>Consumer Attention Mapping</h1>
-        <button onClick={handleLogout} className="logout-btn">Logout</button>
-      </header>
+      <Navbar />
 
       <main className="dashboard-content">
         <h2>Recent Alerts</h2>

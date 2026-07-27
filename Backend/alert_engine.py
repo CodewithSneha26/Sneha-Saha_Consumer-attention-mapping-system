@@ -100,7 +100,8 @@ def check_platform_notifications(db):
 
 def run_all_checks_and_save():
     db = SessionLocal()
-
+    db.query(models.Alert).delete()  # clear old alerts before generating fresh ones
+    db.commit()
     all_alerts = []
     all_alerts.extend(check_shelf_performance_alerts(db))
     all_alerts.extend(check_product_visibility_alerts(db))
