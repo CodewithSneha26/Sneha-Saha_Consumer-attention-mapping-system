@@ -123,3 +123,28 @@
 .login-footer a:hover {
   text-decoration: underline;
 }
+
+.role-select {
+  background: #1e2128;
+  border: 1px solid #2f3239;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #f4f4f6;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.role-select:focus {
+  border-color: #f2b84b;
+}
+
+.login-success {
+  margin-top: 16px;
+  background: rgba(80, 200, 120, 0.1);
+  border: 1px solid rgba(80, 200, 120, 0.3);
+  color: #6dd68a;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
