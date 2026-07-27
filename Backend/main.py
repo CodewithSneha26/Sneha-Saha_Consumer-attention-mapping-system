@@ -1,4 +1,5 @@
 from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse
 import reports_engine
 import alert_engine
 import recommendation_engine
@@ -173,3 +174,18 @@ def download_excel_report():
     filepath = reports_engine.generate_excel_report()
     return FileResponse(filepath, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="consumer_attention_report.xlsx")
 
+@app.get("/heatmaps/{filename}")
+def get_heatmap(filename: str):
+    filepath = f"{filename}"
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Heatmap not found")
+    return FileResponse(filepath, media_type="image/png")
+
+@app.post("/heatmaps/generate")
+def generate_heatmaps():
+    import generate_heatmap
+    generate_heatmap.generate_store_heatmap()
+    generate_heatmap.generate_traffic_heatmap()
+    zone_durations = generate_heatmap.generate_shelf_heatmaps()
+    generate_heatmap.generate_product_attention_heatmap()
+    return {"status": "Heatmaps generated successfully"}
