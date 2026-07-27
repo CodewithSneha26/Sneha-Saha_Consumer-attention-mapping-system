@@ -7,6 +7,10 @@ import Stores from './pages/Stores';
 import Analytics from './pages/Analytics';
 import Heatmaps from './pages/Heatmaps';
 import Reports from './pages/Reports';
+import StoreManagerDashboard from './pages/StoreManagerDashboard';
+import RetailAnalystDashboard from './pages/RetailAnalystDashboard';
+import MarketingManagerDashboard from './pages/MarketingManagerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
 function App() {
@@ -21,6 +25,10 @@ function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/heatmaps" element={<Heatmaps />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/store-manager-dashboard" element={<StoreManagerDashboard />} />
+          <Route path="/retail-analyst-dashboard" element={<RetailAnalystDashboard />} />
+          <Route path="/marketing-manager-dashboard" element={<MarketingManagerDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </div>

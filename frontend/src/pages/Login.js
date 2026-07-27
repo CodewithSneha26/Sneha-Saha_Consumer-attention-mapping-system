@@ -18,7 +18,21 @@ function Login() {
     try {
       const response = await api.post('/login', { email, password });
       localStorage.setItem('token', response.data.access_token);
-      navigate('/dashboard');
+
+      // Fetch user role and redirect to the correct dashboard
+      const meResponse = await api.get('/me', {
+        headers: { Authorization: `Bearer ${response.data.access_token}` }
+      });
+      const role = meResponse.data.role;
+
+      const roleRoutes = {
+        'Store Manager': '/store-manager-dashboard',
+        'Retail Analyst': '/retail-analyst-dashboard',
+        'Marketing Manager': '/marketing-manager-dashboard',
+        'Admin': '/admin-dashboard',
+      };
+
+      navigate(roleRoutes[role] || '/dashboard');
     } catch (err) {
       setError('Invalid email or password. Please try again.');
     } finally {
