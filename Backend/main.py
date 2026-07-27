@@ -1,3 +1,4 @@
+from jose import jwt
 from fastapi.responses import FileResponse
 from fastapi.responses import FileResponse
 import reports_engine
@@ -38,6 +39,24 @@ def get_db():
 @app.get("/")
 def read_root():
     return {"message": "Consumer Attention Mapping System - Backend is running!"}
+
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 @app.post("/register", response_model=schemas.UserResponse)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -189,3 +208,12 @@ def generate_heatmaps():
     zone_durations = generate_heatmap.generate_shelf_heatmaps()
     generate_heatmap.generate_product_attention_heatmap()
     return {"status": "Heatmaps generated successfully"}
+
+@app.get("/me")
+def read_current_user(current_user: models.User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "role": current_user.role
+    }
