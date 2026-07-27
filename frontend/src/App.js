@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
 import Stores from './pages/Stores';
 import Analytics from './pages/Analytics';
 import Heatmaps from './pages/Heatmaps';
@@ -20,7 +19,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/login" />} />
           <Route path="/stores" element={<Stores />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/heatmaps" element={<Heatmaps />} />
