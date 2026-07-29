@@ -217,3 +217,30 @@ def read_current_user(current_user: models.User = Depends(get_current_user)):
         "email": current_user.email,
         "role": current_user.role
     }
+
+@app.post("/detect-shelf-products")
+def detect_shelf_products(file: UploadFile = File(...)):
+    upload_folder = "uploaded_images"
+    os.makedirs(upload_folder, exist_ok=True)
+    file_path = os.path.join(upload_folder, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    from ultralytics import YOLO
+    model = YOLO("yolov8m.pt")
+    results = model(file_path, conf=0.15)
+
+    detections = []
+    for r in results:
+        for box in r.boxes:
+            detections.append({
+                "class": model.names[int(box.cls[0])],
+                "confidence": round(float(box.conf[0]), 2)
+            })
+
+    return {
+        "filename": file.filename,
+        "total_detections": len(detections),
+        "detections": detections,
+        "note": "General object detection model - not trained for individual SKU/product recognition on packed retail shelves"
+    }
