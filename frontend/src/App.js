@@ -1,3 +1,4 @@
+import ShelfDetection from './pages/ShelfDetection';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/marketing-manager-dashboard" element={<MarketingManagerDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/shelf-detection" element={<ShelfDetection />} />
         </Routes>
       </div>
     </Router>
