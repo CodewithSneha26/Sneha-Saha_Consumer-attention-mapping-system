@@ -1,3 +1,4 @@
+import VideoTraffic from './pages/VideoTraffic';
 import ShelfDetection from './pages/ShelfDetection';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/shelf-detection" element={<ShelfDetection />} />
+          <Route path="/video-traffic" element={<VideoTraffic />} />
         </Routes>
       </div>
     </Router>

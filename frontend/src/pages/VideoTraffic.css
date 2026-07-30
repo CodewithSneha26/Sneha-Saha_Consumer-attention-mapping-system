@@ -1,0 +1,130 @@
+.video-traffic-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eef6fc 0%, #f7fbff 100%);
+}
+
+.video-traffic-content {
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.video-traffic-content h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #14324d;
+  margin-bottom: 6px;
+}
+
+.video-traffic-subtitle {
+  font-size: 14px;
+  color: #6b8299;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.upload-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+  text-align: center;
+}
+
+.upload-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border: 2px dashed #a9d4ef;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #6b8299;
+  font-size: 14px;
+  margin-bottom: 18px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.upload-box:hover {
+  border-color: #1c7bb0;
+}
+
+.preview-video {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 8px;
+}
+
+.upload-section button {
+  background: #1c7bb0;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upload-section button:hover {
+  opacity: 0.9;
+}
+
+.upload-section button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.results-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+}
+
+.results-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #14324d;
+  margin-bottom: 16px;
+}
+
+.results-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-stat {
+  background: #eaf6ff;
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: center;
+  flex: 1;
+}
+
+.summary-value {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  color: #1c7bb0;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: #6b8299;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.results-note {
+  font-size: 12px;
+  color: #a9bccf;
+  font-style: italic;
+  border-top: 1px solid #eef2f6;
+  padding-top: 14px;
+  line-height: 1.5;
+}

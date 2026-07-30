@@ -22,3 +22,6 @@ Backend/face_landmarker.task
 
 # Generated reports (regeneratable, not needed in repo)
 Backend/generated_reports/
+
+# Uploaded videos (temporary)
+Backend/uploaded_videos/
