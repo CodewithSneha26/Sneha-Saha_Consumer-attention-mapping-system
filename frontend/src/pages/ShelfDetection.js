@@ -80,8 +80,16 @@ function ShelfDetection() {
 
             <div className="results-summary">
               <div className="summary-stat">
-                <span className="summary-value">{results.total_detections}</span>
-                <span className="summary-label">Total Objects Detected</span>
+                <span className="summary-value">{results.named_detections_count}</span>
+                <span className="summary-label">Named (YOLO) Detections</span>
+              </div>
+              <div className="summary-stat">
+                <span className="summary-value">{results.generic_regions_count}</span>
+                <span className="summary-label">Generic Product Regions</span>
+              </div>
+              <div className="summary-stat">
+                <span className="summary-value">{results.estimated_total_products}</span>
+                <span className="summary-label">Estimated Total Products</span>
               </div>
             </div>
 

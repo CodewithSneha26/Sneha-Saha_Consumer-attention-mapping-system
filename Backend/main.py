@@ -36,6 +36,41 @@ def get_db():
     finally:
         db.close()
 
+def detect_generic_product_regions(image_path):
+    """Detects densely packed rectangular product-shaped regions using edge detection,
+    as a fallback for products YOLO's COCO categories don't recognize."""
+    import cv2
+    import numpy as np
+
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Reduce noise, then detect edges
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blurred, 50, 150)
+
+    # Dilate edges slightly to connect nearby lines into solid shapes
+    kernel = np.ones((5, 5), np.uint8)
+    dilated = cv2.dilate(edges, kernel, iterations=2)
+
+    # Find contours (outlines of connected shapes)
+    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    img_area = img.shape[0] * img.shape[1]
+    regions = []
+
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        # Filter out tiny noise and overly large regions (background/whole image)
+        if img_area * 0.001 < area < img_area * 0.05:
+            x, y, w, h = cv2.boundingRect(cnt)
+            aspect_ratio = w / h if h > 0 else 0
+            # Product packaging is usually somewhat rectangular, not extremely thin/wide
+            if 0.2 < aspect_ratio < 5:
+                regions.append({"x": x, "y": y, "w": w, "h": h})
+
+    return regions, img
+
 @app.get("/")
 def read_root():
     return {"message": "Consumer Attention Mapping System - Backend is running!"}
@@ -229,29 +264,44 @@ def detect_shelf_products(file: UploadFile = File(...)):
     from ultralytics import YOLO
     import cv2
 
+    # YOLO detection (named categories, COCO-limited)
     model = YOLO("yolov8m.pt")
     results = model(file_path, conf=0.15)
 
     detections = []
+    annotated_frame = None
     for r in results:
         for box in r.boxes:
             detections.append({
                 "class": model.names[int(box.cls[0])],
                 "confidence": round(float(box.conf[0]), 2)
             })
-
-        # Save the annotated image (with bounding boxes drawn)
         annotated_frame = r.plot()
-        annotated_filename = f"annotated_{file.filename}"
-        annotated_path = os.path.join(upload_folder, annotated_filename)
-        cv2.imwrite(annotated_path, annotated_frame)
+
+    # Generic region detection (catches products YOLO doesn't recognize by name)
+    generic_regions, original_img = detect_generic_product_regions(file_path)
+
+    # Draw generic regions in a different color (yellow) on the same annotated image
+    for region in generic_regions:
+        cv2.rectangle(
+            annotated_frame,
+            (region["x"], region["y"]),
+            (region["x"] + region["w"], region["y"] + region["h"]),
+            (0, 255, 255), 1
+        )
+
+    annotated_filename = f"annotated_{file.filename}"
+    annotated_path = os.path.join(upload_folder, annotated_filename)
+    cv2.imwrite(annotated_path, annotated_frame)
 
     return {
         "filename": file.filename,
         "annotated_image_url": f"/uploaded-image/{annotated_filename}",
-        "total_detections": len(detections),
+        "named_detections_count": len(detections),
         "detections": detections,
-        "note": "General object detection model - not trained for individual SKU/product recognition on packed retail shelves"
+        "generic_regions_count": len(generic_regions),
+        "estimated_total_products": len(detections) + len(generic_regions),
+        "note": "Blue boxes = named YOLO detections (COCO's 80 categories only). Yellow boxes = generic product-shaped regions detected via edge analysis, catching packaging YOLO doesn't recognize by name (e.g., toothpaste boxes). This combined estimate gives broader shelf coverage than named detection alone, though it's still not true SKU-level recognition."
     }
 
 @app.get("/uploaded-image/{filename}")
