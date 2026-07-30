@@ -227,6 +227,8 @@ def detect_shelf_products(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     from ultralytics import YOLO
+    import cv2
+
     model = YOLO("yolov8m.pt")
     results = model(file_path, conf=0.15)
 
@@ -238,9 +240,23 @@ def detect_shelf_products(file: UploadFile = File(...)):
                 "confidence": round(float(box.conf[0]), 2)
             })
 
+        # Save the annotated image (with bounding boxes drawn)
+        annotated_frame = r.plot()
+        annotated_filename = f"annotated_{file.filename}"
+        annotated_path = os.path.join(upload_folder, annotated_filename)
+        cv2.imwrite(annotated_path, annotated_frame)
+
     return {
         "filename": file.filename,
+        "annotated_image_url": f"/uploaded-image/{annotated_filename}",
         "total_detections": len(detections),
         "detections": detections,
         "note": "General object detection model - not trained for individual SKU/product recognition on packed retail shelves"
     }
+
+@app.get("/uploaded-image/{filename}")
+def get_uploaded_image(filename: str):
+    filepath = os.path.join("uploaded_images", filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(filepath, media_type="image/png")

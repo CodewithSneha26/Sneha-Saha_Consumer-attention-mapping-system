@@ -71,6 +71,13 @@ function ShelfDetection() {
         {results && (
           <div className="results-section">
             <h3>Detection Results</h3>
+
+            <img
+              src={`http://127.0.0.1:8000${results.annotated_image_url}`}
+              alt="Annotated detection result"
+              className="annotated-result-image"
+            />
+
             <div className="results-summary">
               <div className="summary-stat">
                 <span className="summary-value">{results.total_detections}</span>
