@@ -328,15 +328,6 @@ def detect_video_traffic(file: UploadFile = File(...)):
     if not cap.isOpened():
         raise HTTPException(status_code=400, detail="Could not process video file")
 
-    fps = cap.get(cv2.CAP_PROP_FPS) or 20
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    output_filename = f"annotated_{file.filename.rsplit('.', 1)[0]}.mp4"
-    output_path = os.path.join(upload_folder, output_filename)
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-
     frame_count = 0
     unique_ids = set()
     max_simultaneous = 0
@@ -346,10 +337,10 @@ def detect_video_traffic(file: UploadFile = File(...)):
         if not ret:
             break
         frame_count += 1
+        if frame_count % 3 != 0:
+            continue
 
         results = model.track(frame, persist=True, verbose=False, classes=[0])
-        annotated = results[0].plot()
-
         current_count = 0
         if results[0].boxes.id is not None:
             for track_id in results[0].boxes.id:
@@ -357,26 +348,12 @@ def detect_video_traffic(file: UploadFile = File(...)):
                 current_count += 1
         max_simultaneous = max(max_simultaneous, current_count)
 
-        cv2.putText(annotated, f"People: {current_count} | Unique so far: {len(unique_ids)}",
-                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-
-        out.write(annotated)
-
     cap.release()
-    out.release()
 
     return {
         "filename": file.filename,
-        "annotated_video_url": f"/uploaded-video/{output_filename}",
         "frames_processed": frame_count,
         "total_unique_people": len(unique_ids),
         "max_simultaneous_people": max_simultaneous,
         "note": "Validated multi-person tracking on uploaded video footage, confirming the system works on real-world retail traffic, not just live webcam input."
     }
-
-@app.get("/uploaded-video/{filename}")
-def get_uploaded_video(filename: str):
-    filepath = os.path.join("uploaded_videos", filename)
-    if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="Video not found")
-    return FileResponse(filepath, media_type="video/mp4")

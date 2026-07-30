@@ -66,14 +66,6 @@ function VideoTraffic() {
           <div className="results-section">
             <h3>Traffic Analysis Results</h3>
 
-            {results.annotated_video_url && (
-              <video
-                src={`http://127.0.0.1:8000${results.annotated_video_url}`}
-                controls
-                className="sample-frame-image"
-              />
-            )}
-
             <div className="results-summary">
               <div className="summary-stat">
                 <span className="summary-value">{results.frames_processed}</span>
