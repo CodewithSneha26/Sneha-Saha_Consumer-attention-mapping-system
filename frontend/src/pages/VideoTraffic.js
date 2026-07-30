@@ -65,6 +65,15 @@ function VideoTraffic() {
         {results && (
           <div className="results-section">
             <h3>Traffic Analysis Results</h3>
+
+            {results.sample_frame_url && (
+              <img
+                src={`http://127.0.0.1:8000${results.sample_frame_url}`}
+                alt="Sample detection frame"
+                className="sample-frame-image"
+              />
+            )}
+
             <div className="results-summary">
               <div className="summary-stat">
                 <span className="summary-value">{results.frames_processed}</span>

@@ -328,11 +328,16 @@ def detect_video_traffic(file: UploadFile = File(...)):
     if not cap.isOpened():
         raise HTTPException(status_code=400, detail="Could not process video file")
 
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    middle_frame_num = total_frames // 2
+
     frame_count = 0
     unique_ids = set()
     max_simultaneous = 0
+    sample_frame_saved = False
+    sample_filename = f"video_sample_{file.filename}.jpg"
+    sample_path = os.path.join(upload_folder, sample_filename)
 
-    # Process every 3rd frame for speed (video can have hundreds of frames)
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -349,10 +354,17 @@ def detect_video_traffic(file: UploadFile = File(...)):
                 current_count += 1
         max_simultaneous = max(max_simultaneous, current_count)
 
+        # Save an annotated frame from roughly the middle of the video, with the most people visible
+        if not sample_frame_saved and current_count >= max(1, max_simultaneous - 1):
+            annotated = results[0].plot()
+            cv2.imwrite(sample_path, annotated)
+            sample_frame_saved = True
+
     cap.release()
 
     return {
         "filename": file.filename,
+        "sample_frame_url": f"/uploaded-image/{sample_filename}" if sample_frame_saved else None,
         "frames_processed": frame_count,
         "total_unique_people": len(unique_ids),
         "max_simultaneous_people": max_simultaneous,

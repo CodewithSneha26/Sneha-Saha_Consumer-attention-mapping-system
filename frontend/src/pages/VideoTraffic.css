@@ -128,3 +128,10 @@
   padding-top: 14px;
   line-height: 1.5;
 }
+
+.sample-frame-image {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #eef2f6;
+}
