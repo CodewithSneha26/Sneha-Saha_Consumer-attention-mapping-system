@@ -357,3 +357,104 @@ def detect_video_traffic(file: UploadFile = File(...)):
         "max_simultaneous_people": max_simultaneous,
         "note": "Validated multi-person tracking on uploaded video footage, confirming the system works on real-world retail traffic, not just live webcam input."
     }
+
+@app.post("/tracking/start-session")
+def start_tracking_session(duration_seconds: int = 20):
+    import cv2
+    from ultralytics import YOLO
+    import time
+
+    yolo_model = YOLO("yolov8n.pt")
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+
+    db_init = SessionLocal()
+    shelves_in_db = db_init.query(models.Shelf).all()
+    db_init.close()
+
+    zone_to_shelf = {}
+    if len(shelves_in_db) >= 3:
+        zone_to_shelf["Zone A (Left)"] = shelves_in_db[0].shelf_name
+        zone_to_shelf["Zone B (Middle)"] = shelves_in_db[1].shelf_name
+        zone_to_shelf["Zone C (Right)"] = shelves_in_db[2].shelf_name
+    else:
+        zone_to_shelf["Zone A (Left)"] = "Zone A (Left)"
+        zone_to_shelf["Zone B (Middle)"] = "Zone B (Middle)"
+        zone_to_shelf["Zone C (Right)"] = "Zone C (Right)"
+
+    def get_zone(center_x, frame_width):
+        if center_x < frame_width / 3:
+            raw_zone = "Zone A (Left)"
+        elif center_x < 2 * frame_width / 3:
+            raw_zone = "Zone B (Middle)"
+        else:
+            raw_zone = "Zone C (Right)"
+        return zone_to_shelf.get(raw_zone, raw_zone)
+
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        raise HTTPException(status_code=400, detail="Could not access webcam")
+
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    person_state = {}
+    records_saved = 0
+    start_time = time.time()
+
+    while time.time() - start_time < duration_seconds:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame = cv2.flip(frame, 1)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        results = yolo_model.track(frame, persist=True, verbose=False, classes=[0])
+
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
+        attention_status = "Looking Away"
+        for (fx, fy, fw, fh) in faces:
+            face_gray = gray[fy:fy + fh, fx:fx + fw]
+            eyes = eye_cascade.detectMultiScale(face_gray, scaleFactor=1.1, minNeighbors=5)
+            if len(eyes) >= 2:
+                attention_status = "Attentive"
+            break
+
+        if results[0].boxes.id is not None:
+            for box, track_id in zip(results[0].boxes.xyxy, results[0].boxes.id):
+                x1, y1, x2, y2 = box.tolist()
+                center_x = (x1 + x2) / 2
+                center_y = (y1 + y2) / 2
+                track_id = int(track_id)
+                zone = get_zone(center_x, frame_width)
+
+                db_pos = SessionLocal()
+                point = models.PositionPoint(person_track_id=track_id, x=int(center_x), y=int(center_y))
+                db_pos.add(point)
+                db_pos.commit()
+                db_pos.close()
+
+                if track_id not in person_state:
+                    person_state[track_id] = {"zone": zone, "attention": attention_status, "state_start_time": time.time()}
+                else:
+                    prev = person_state[track_id]
+                    if prev["zone"] != zone or prev["attention"] != attention_status:
+                        duration = time.time() - prev["state_start_time"]
+                        db = SessionLocal()
+                        record = models.AttentionRecord(
+                            person_track_id=track_id, zone=prev["zone"],
+                            attention_status=prev["attention"], duration_seconds=int(duration)
+                        )
+                        db.add(record)
+                        db.commit()
+                        db.close()
+                        records_saved += 1
+                        person_state[track_id] = {"zone": zone, "attention": attention_status, "state_start_time": time.time()}
+
+    cap.release()
+
+    return {
+        "status": "Tracking session complete",
+        "duration_seconds": duration_seconds,
+        "unique_people_tracked": len(person_state),
+        "attention_records_saved": records_saved
+    }
