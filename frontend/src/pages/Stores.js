@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
 import './Stores.css';
@@ -10,7 +10,6 @@ function Stores() {
   const [cameras, setCameras] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form states
   const [storeForm, setStoreForm] = useState({ name: '', location: '' });
   const [shelfForm, setShelfForm] = useState({ store_id: '', shelf_name: '', zone: '' });
   const [cameraForm, setCameraForm] = useState({ store_id: '', camera_name: '', location_description: '' });
@@ -83,6 +82,36 @@ function Stores() {
     }
   };
 
+  const handleDeleteStore = async (id, name) => {
+    if (!window.confirm(`Delete store "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/stores/${id}`);
+      fetchAll();
+    } catch (err) {
+      alert('Failed to delete store.');
+    }
+  };
+
+  const handleDeleteShelf = async (id, name) => {
+    if (!window.confirm(`Delete shelf "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/shelves/${id}`);
+      fetchAll();
+    } catch (err) {
+      alert('Failed to delete shelf.');
+    }
+  };
+
+  const handleDeleteCamera = async (id, name) => {
+    if (!window.confirm(`Delete camera "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/cameras/${id}`);
+      fetchAll();
+    } catch (err) {
+      alert('Failed to delete camera.');
+    }
+  };
+
   return (
     <div className="stores-page">
       <Navbar />
@@ -114,7 +143,10 @@ function Stores() {
           <div className="grid-section">
             {stores.map((store) => (
               <div key={store.id} className="info-card">
-                <span className="tag store-tag">STORE</span>
+                <div className="card-top-row">
+                  <span className="tag store-tag">STORE</span>
+                  <button className="delete-btn" onClick={() => handleDeleteStore(store.id, store.name)}>✕</button>
+                </div>
                 <h3>{store.name}</h3>
                 <p>{store.location}</p>
               </div>
@@ -154,7 +186,10 @@ function Stores() {
         <div className="grid-section">
           {shelves.map((shelf) => (
             <div key={shelf.id} className="info-card">
-              <span className="tag shelf-tag">SHELF</span>
+              <div className="card-top-row">
+                <span className="tag shelf-tag">SHELF</span>
+                <button className="delete-btn" onClick={() => handleDeleteShelf(shelf.id, shelf.shelf_name)}>✕</button>
+              </div>
               <Link to={`/shelf-detail/${encodeURIComponent(shelf.shelf_name)}`} className="shelf-link">
                 <h3>{shelf.shelf_name}</h3>
               </Link>
@@ -196,7 +231,10 @@ function Stores() {
         <div className="grid-section">
           {cameras.map((camera) => (
             <div key={camera.id} className="info-card">
-              <span className="tag camera-tag">CAMERA</span>
+              <div className="card-top-row">
+                <span className="tag camera-tag">CAMERA</span>
+                <button className="delete-btn" onClick={() => handleDeleteCamera(camera.id, camera.camera_name)}>✕</button>
+              </div>
               <h3>{camera.camera_name}</h3>
               <p>{getStoreName(camera.store_id)}</p>
               {camera.location_description && <p className="zone-label">{camera.location_description}</p>}

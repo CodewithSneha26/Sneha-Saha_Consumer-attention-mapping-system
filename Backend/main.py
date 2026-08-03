@@ -500,3 +500,30 @@ def get_shelf_detail(shelf_name: str, db: Session = Depends(get_db)):
             } for a in attention_history
         ]
     }
+
+@app.delete("/stores/{store_id}")
+def delete_store(store_id: int, db: Session = Depends(get_db)):
+    store = db.query(models.Store).filter(models.Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    db.delete(store)
+    db.commit()
+    return {"status": "Store deleted successfully"}
+
+@app.delete("/shelves/{shelf_id}")
+def delete_shelf(shelf_id: int, db: Session = Depends(get_db)):
+    shelf = db.query(models.Shelf).filter(models.Shelf.id == shelf_id).first()
+    if not shelf:
+        raise HTTPException(status_code=404, detail="Shelf not found")
+    db.delete(shelf)
+    db.commit()
+    return {"status": "Shelf deleted successfully"}
+
+@app.delete("/cameras/{camera_id}")
+def delete_camera(camera_id: int, db: Session = Depends(get_db)):
+    camera = db.query(models.Camera).filter(models.Camera.id == camera_id).first()
+    if not camera:
+        raise HTTPException(status_code=404, detail="Camera not found")
+    db.delete(camera)
+    db.commit()
+    return {"status": "Camera deleted successfully"}
