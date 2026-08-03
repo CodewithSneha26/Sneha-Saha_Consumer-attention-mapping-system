@@ -7,15 +7,18 @@ import { Link } from 'react-router-dom';
 function Analytics() {
   const [scores, setScores] = useState({});
   const [recommendations, setRecommendations] = useState([]);
+  const [shoppers, setShoppers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get('/shelf-scores'),
       api.get('/recommendations'),
-    ]).then(([scoresRes, recsRes]) => {
+      api.get('/behavior-analysis-all'),
+    ]).then(([scoresRes, recsRes, shoppersRes]) => {
       setScores(scoresRes.data);
       setRecommendations(recsRes.data);
+      setShoppers(shoppersRes.data);
       setLoading(false);
     }).catch((err) => {
       console.error(err);
@@ -72,6 +75,40 @@ function Analytics() {
               ))}
             </div>
           ))}
+        </div>
+
+        <h2>Consumer Behavior Segments</h2>
+        <div className="shoppers-grid">
+          {shoppers.length === 0 ? (
+            <p>No shopper behavior data yet. Run a tracking session first.</p>
+          ) : (
+            shoppers.map((shopper) => (
+              <div key={shopper.person_track_id} className="shopper-card">
+                <div className="shopper-header">
+                  <span className="shopper-id">Person #{shopper.person_track_id}</span>
+                  <span className="segment-badge">{shopper.segment}</span>
+                </div>
+                <div className="shopper-stats">
+                  <div><span>Zones Visited</span><strong>{shopper.zones_visited.length}</strong></div>
+                  <div><span>Total Time</span><strong>{shopper.total_time_seconds}s</strong></div>
+                  <div><span>Interactions</span><strong>{shopper.total_interactions}</strong></div>
+                </div>
+                {shopper.journey_path && shopper.journey_path.length > 0 && (
+                  <div className="journey-path">
+                    <span className="journey-label">Journey:</span>
+                    <div className="journey-steps">
+                      {shopper.journey_path.map((step, idx) => (
+                        <React.Fragment key={idx}>
+                          <span className="journey-step">{step}</span>
+                          {idx < shopper.journey_path.length - 1 && <span className="journey-arrow">→</span>}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </main>
     </div>

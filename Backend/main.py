@@ -527,3 +527,15 @@ def delete_camera(camera_id: int, db: Session = Depends(get_db)):
     db.delete(camera)
     db.commit()
     return {"status": "Camera deleted successfully"}
+
+@app.get("/behavior-analysis-all")
+def get_all_behavior_analysis(db: Session = Depends(get_db)):
+    all_ids = db.query(models.AttentionRecord.person_track_id).distinct().all()
+    person_ids = [row[0] for row in all_ids]
+
+    results = []
+    for pid in person_ids:
+        result = behavior_analysis.classify_shopper(pid, db)
+        if isinstance(result, dict):
+            results.append(result)
+    return results

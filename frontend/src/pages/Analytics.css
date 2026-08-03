@@ -174,3 +174,99 @@
 .shelf-link:hover h3 {
   color: #1c7bb0;
 }
+
+.shoppers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.shopper-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+}
+
+.shopper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.shopper-id {
+  font-size: 13px;
+  font-weight: 700;
+  color: #14324d;
+}
+
+.segment-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1c7bb0;
+  background: #eaf6ff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.shopper-stats {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #eef2f6;
+  border-bottom: 1px solid #eef2f6;
+  padding: 12px 0;
+  margin-bottom: 12px;
+}
+
+.shopper-stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shopper-stats span {
+  font-size: 10px;
+  color: #a9bccf;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.shopper-stats strong {
+  font-size: 15px;
+  color: #14324d;
+  margin-top: 2px;
+}
+
+.journey-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b9cb0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.journey-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.journey-step {
+  font-size: 12px;
+  background: #f5faff;
+  border: 1px solid #dceaf5;
+  color: #14324d;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.journey-arrow {
+  color: #a9bccf;
+  font-size: 12px;
+}
