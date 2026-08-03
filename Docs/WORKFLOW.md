@@ -1,161 +1,193 @@
-graph TD
-    %% Core Styling Definitions
-    classDef titleStyle fill:#1e293b,stroke:#0f172a,stroke-width:2px,color:#fff,font-weight:bold;
-    classDef startEnd fill:#475569,stroke:#334155,stroke-width:2px,color:#fff,font-weight:bold;
-    classDef engineBox fill:#f8fafc,stroke:#475569,stroke-width:2px,font-weight:bold;
-    classDef subBox fill:#f1f5f9,stroke:#94a3b8,stroke-width:1px;
-    classDef matrixBox fill:#eff6ff,stroke:#3b82f6,stroke-width:2px;
+# Consumer Attention Mapping System - End-to-End Workflow
 
-    %% Title and Entry
-    Title[CONSUMER ATTENTION MAPPING SYSTEM WORKFLOW]:::titleStyle
-    Title --> Start([START]):::startEnd
-    
-    %% Step 1
-    Start --> Step1["1. USER AUTHENTICATION & ACCESS
-    Reference: Store Manager | Retail Analyst | Marketing Manager | Administrator"]:::engineBox
-    subgraph S1 [Authentication Features]
-        Step1 --> S1_1[• User Registration]:::subBox
-        Step1 --> S1_2[• JWT / OAuth2 Login]:::subBox
-        Step1 --> S1_3[• Role Verification]:::subBox
-        Step1 --> S1_4[• User Profile Management]:::subBox
-    end
+This workflow illustrates the complete lifecycle of the Consumer Attention Mapping System, from user authentication to retail analytics and deployment.
 
-    %% Step 2
-    S1 --> Step2["2. STORE & SHELF MANAGEMENT"]:::engineBox
-    subgraph S2 [Management Features]
-        Step2 --> S2_1[• Register Store]:::subBox
-        Step2 --> S2_2[• Shelf Mapping]:::subBox
-        Step2 --> S2_3[• Product Placement]:::subBox
-        Step2 --> S2_4[• Zone Configuration]:::subBox
-        Step2 --> S2_5[• Camera Assignment]:::subBox
-    end
+```mermaid
+flowchart LR
 
-    %% Step 3
-    S2 --> Step3["3. RETAIL CAMERA INPUT"]:::engineBox
-    subgraph S3 [Ingestion Features]
-        Step3 --> S3_1[• Live Camera Feed]:::subBox
-        Step3 --> S3_2[• Video Streaming]:::subBox
-        Step3 --> S3_3[• Frame Extraction]:::subBox
-        Step3 --> S3_4[• Image Preprocessing]:::subBox
-    end
+%% ---------------- USERS ----------------
+subgraph USER["User Access"]
+A([Start]) --> B[User Registration / Login]
+B --> C[JWT / OAuth2 Authentication]
+C --> D{Role Verification}
+D --> E1[Store Manager]
+D --> E2[Retail Analyst]
+D --> E3[Marketing Manager]
+D --> E4[Administrator]
+end
 
-    %% Step 4
-    S3 --> Step4["4. CONSUMER DETECTION & TRACKING ENGINE"]:::engineBox
-    subgraph S4 [Tracking Features]
-        Step4 --> S4_1[• Person Detection YOLOv8]:::subBox
-        Step4 --> S4_2[• Multi-Person Tracking DeepSORT / ByteTrack]:::subBox
-        Step4 --> S4_3[• Shopper Identification]:::subBox
-        Step4 --> S4_4[• Entry / Exit Monitoring]:::subBox
-        Step4 --> S4_5[• Zone Tracking]:::subBox
-        Step4 --> S4_6[• Journey Path Tracking]:::subBox
-    end
+%% ---------------- STORE ----------------
+subgraph STORE["Store & Shelf Management"]
+F[Register Store]
+G[Create Shelf Layout]
+H[Configure Store Zones]
+I[Assign Product Categories]
+J[Assign Cameras]
+F --> G --> H --> I --> J
+end
 
-    %% Step 5
-    S4 --> Step5["5. ATTENTION ANALYSIS ENGINE"]:::engineBox
-    subgraph S5 [Attention Metrics]
-        Step5 --> S5_1[• Gaze Estimation]:::subBox
-        Step5 --> S5_2[• Head Pose Analysis]:::subBox
-        Step5 --> S5_3[• Shelf Attention Detection]:::subBox
-        Step5 --> S5_4[• Product Focus Detection]:::subBox
-        Step5 --> S5_5[• Dwell Time Calculation]:::subBox
-        Step5 --> S5_6[• Repeated Attention Events]:::subBox
-    end
+%% ---------------- VIDEO ----------------
+subgraph VIDEO["Retail Camera Pipeline"]
+K[Live Camera Feed]
+L[Frame Extraction]
+M[Image Preprocessing]
+K --> L --> M
+end
 
-    %% Step 6
-    S5 --> Step6["6. PRODUCT INTERACTION ANALYSIS"]:::engineBox
-    subgraph S6 [Interaction Types]
-        Step6 --> S6_1[• Product Viewed]:::subBox
-        Step6 --> S6_2[• Product Picked Up]:::subBox
-        Step6 --> S6_3[• Product Returned]:::subBox
-        Step6 --> S6_4[• Product Purchased]:::subBox
-        Step6 --> S6_5[• Product Comparison Analysis]:::subBox
-    end
+%% ---------------- DETECTION ----------------
+subgraph DETECT["Consumer Detection & Tracking"]
+N[Person Detection<br/>YOLOv8]
+O[Multi-Person Tracking]
+P[Unique Shopper ID]
+Q[Path Tracking]
+R[Zone Tracking]
+S[Session Generation]
+N --> O --> P --> Q --> R --> S
+end
 
-    %% Step 7 & Sub-Segmentation Box
-    S6 --> Step7["7. CONSUMER BEHAVIOR INTELLIGENCE"]:::engineBox
-    subgraph S7 [Intelligence Features]
-        Step7 --> S7_1[• Shopping Pattern Analysis]:::subBox
-        Step7 --> S7_2[• Consumer Segmentation]:::subBox
-        Step7 --> S7_3[• Product Preference Analysis]:::subBox
-        Step7 --> S7_4[• Journey Analytics]:::subBox
-        Step7 --> S7_5[• Movement Behavior Analysis]:::subBox
-    end
-    
-    S7 --> SegBox["CONSUMER SEGMENTATION ROLES
-    • Explorer
-    • Quick Buyer
-    • Comparison Shopper
-    • Impulse Buyer
-    • Brand Loyal Customer"]:::matrixBox
+%% ---------------- ATTENTION ----------------
+subgraph ATTENTION["Attention Analysis"]
+T[Gaze Estimation]
+U[Head Pose Analysis]
+V[Shelf Attention]
+W[Product Focus]
+X[Dwell Time]
+Y[Repeated Attention]
+T --> U --> V --> W --> X --> Y
+end
 
-    %% Step 8
-    SegBox --> Step8["8. ATTENTION HEATMAP GENERATION"]:::engineBox
-    subgraph S8 [Heatmap Categories]
-        Step8 --> S8_1[• Store Heatmap]:::subBox
-        Step8 --> S8_2[• Shelf Heatmap]:::subBox
-        Step8 --> S8_3[• Product Heatmap]:::subBox
-        Step8 --> S8_4[• Customer Traffic Heatmap]:::subBox
-        Step8 --> S8_5[• Engagement Hotspots]:::subBox
-    end
+%% ---------------- INTERACTION ----------------
+subgraph INTERACTION["Product Interaction"]
+Z[Product Viewed]
+AA[Product Picked]
+AB[Product Returned]
+AC[Product Purchased]
+AD[Product Comparison]
+Z --> AA --> AB --> AC --> AD
+end
 
-    %% Step 9
-    S8 --> Step9["9. PRODUCT ATTRACTIVENESS SCORING ENGINE
-    • Attention Duration ───> 35%
-    • Interaction Frequency ──> 25%
-    • Product Pickup Rate ───> 20%
-    • Purchase Conversion ───> 15%
-    • Repeat Engagement ────> 5%"]:::matrixBox
+%% ---------------- BEHAVIOR ----------------
+subgraph BEHAVIOR["Consumer Behavior Intelligence"]
+AE[Shopping Pattern]
+AF[Movement Analysis]
+AG[Journey Analytics]
+AH[Product Preference]
+AI[Consumer Segmentation]
+AE --> AF --> AG --> AH --> AI
+end
 
-    %% Step 10
-    Step9 --> Step10["10. RECOMMENDATION & OPTIMIZATION ENGINE"]:::engineBox
-    subgraph S10 [Optimization Features]
-        Step10 --> S10_1[• Shelf Optimization]:::subBox
-        Step10 --> S10_2[• Product Placement Recommendation]:::subBox
-        Step10 --> S10_3[• Promotion Optimization]:::subBox
-        Step10 --> S10_4[• Consumer Engagement Suggestions]:::subBox
-        Step10 --> S10_5[• Store Layout Improvement]:::subBox
-    end
+%% ---------------- SEGMENTS ----------------
+subgraph SEGMENTS["Consumer Segments"]
+AJ[Explorer]
+AK[Quick Buyer]
+AL[Comparison Shopper]
+AM[Impulse Buyer]
+AN[Brand Loyal Customer]
+end
 
-    %% Analytics Dashboard Matrix
-    S10 --> DashTitle["ANALYTICS DASHBOARD MATRIX"]:::titleStyle
-    
-    subgraph DashMatrix [Role Analytics Matrix]
-        ManagerBox["STORE MANAGER
-        • Traffic Analytics
-        • Shelf Reports
-        • Conversion"]:::subBox
-        
-        AnalystBox["RETAIL ANALYST
-        • Heatmaps
-        • Behavior Analysis
-        • Journey Analytics"]:::subBox
-        
-        MarketingBox["MARKETING MANAGER
-        • Campaign Analytics
-        • Product Visibility
-        • Promotions"]:::subBox
-    end
-    DashTitle --> ManagerBox & AnalystBox & MarketingBox
+%% ---------------- HEATMAP ----------------
+subgraph HEATMAP["Attention Heatmaps"]
+AO[Store Heatmap]
+AP[Shelf Heatmap]
+AQ[Product Heatmap]
+AR[Traffic Heatmap]
+AS[Hotspot Detection]
+AO --> AP --> AQ --> AR --> AS
+end
 
-    %% Downstream Actions (Alerts & Reports)
-    ManagerBox & AnalystBox & MarketingBox --> ActionsTitle["SYSTEM OUTPUT CHANNELS"]:::titleStyle
-    
-    subgraph ActionsMatrix [Outputs]
-        AlertsBox["NOTIFICATIONS & ALERTS
-        • Shelf Alerts
-        • Camera Health
-        • Traffic Alerts
-        • Platform Notifications"]:::subBox
-        
-        ReportsBox["REPORTS & EXPORT
-        • Attention Report
-        • Shelf Report
-        • Engagement Report
-        • PDF / Excel Export"]:::subBox
-    end
-    ActionsTitle --> AlertsBox & ReportsBox
+%% ---------------- SCORING ----------------
+subgraph SCORE["Product Attractiveness Engine"]
+AT[Attention Score 35%]
+AU[Interaction Score 25%]
+AV[Pickup Rate 20%]
+AW[Conversion Rate 15%]
+AX[Repeat Engagement 5%]
+AY[Final Product Score]
+AT --> AY
+AU --> AY
+AV --> AY
+AW --> AY
+AX --> AY
+end
 
-    %% Final Infrastructure & Exit
-    AlertsBox & ReportsBox --> Step11["11. DEPLOYMENT PIPELINE
-    Docker ──> AWS / Azure ──> Monitoring ──> Logging ──> Production"]:::matrixBox
-    Step11 --> End([END]):::startEnd
+%% ---------------- RECOMMENDATION ----------------
+subgraph RECOMMEND["Recommendation Engine"]
+AZ[Shelf Optimization]
+BA[Product Placement]
+BB[Promotion Strategy]
+BC[Layout Improvement]
+BD[Consumer Engagement Suggestions]
+AZ --> BA --> BB --> BC --> BD
+end
+
+%% ---------------- DASHBOARD ----------------
+subgraph DASHBOARD["Analytics Dashboard"]
+BE[Store Dashboard]
+BF[Retail Dashboard]
+BG[Marketing Dashboard]
+BH[Admin Dashboard]
+end
+
+%% ---------------- REPORTS ----------------
+subgraph REPORTS["Reports & Alerts"]
+BI[Attention Reports]
+BJ[Shelf Reports]
+BK[Engagement Reports]
+BL[Conversion Reports]
+BM[PDF / Excel Export]
+BN[Notifications & Alerts]
+BI --> BM
+BJ --> BM
+BK --> BM
+BL --> BM
+end
+
+%% ---------------- DEPLOY ----------------
+subgraph DEPLOY["Deployment"]
+BO[Docker]
+BP[AWS / Azure]
+BQ[Monitoring]
+BR[Logging]
+BS([End])
+BO --> BP --> BQ --> BR --> BS
+end
+
+%% ---------------- MAIN FLOW ----------------
+
+E1 --> F
+E2 --> F
+E3 --> F
+E4 --> F
+
+J --> K
+M --> N
+S --> T
+Y --> Z
+AD --> AE
+AI --> AJ
+AI --> AK
+AI --> AL
+AI --> AM
+AI --> AN
+
+AJ --> AO
+AK --> AO
+AL --> AO
+AM --> AO
+AN --> AO
+
+AS --> AT
+AY --> AZ
+BD --> BE
+BD --> BF
+BD --> BG
+BD --> BH
+
+BE --> BI
+BF --> BJ
+BG --> BK
+BH --> BL
+
+BM --> BO
+BN --> BO
+```
