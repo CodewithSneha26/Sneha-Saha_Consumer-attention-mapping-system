@@ -458,3 +458,45 @@ def start_tracking_session(duration_seconds: int = 20):
         "unique_people_tracked": len(person_state),
         "attention_records_saved": records_saved
     }
+
+@app.get("/shelf-detail/{shelf_name}")
+def get_shelf_detail(shelf_name: str, db: Session = Depends(get_db)):
+    # Get score data for this specific shelf
+    all_scores = scoring_engine.calculate_shelf_scores()
+    shelf_score = all_scores.get(shelf_name, None)
+
+    # Get recommendations for this specific shelf
+    all_recs = recommendation_engine.generate_recommendations()
+    shelf_recs = next((r for r in all_recs if r["shelf"] == shelf_name), None)
+
+    # Get interaction history for this shelf
+    interactions = db.query(models.ProductInteraction).filter(
+        models.ProductInteraction.shelf_zone == shelf_name
+    ).order_by(models.ProductInteraction.created_at.desc()).limit(20).all()
+
+    # Get attention history for this shelf
+    attention_history = db.query(models.AttentionRecord).filter(
+        models.AttentionRecord.zone == shelf_name
+    ).order_by(models.AttentionRecord.created_at.desc()).limit(20).all()
+
+    return {
+        "shelf_name": shelf_name,
+        "score": shelf_score,
+        "recommendations": shelf_recs["recommendations"] if shelf_recs else [],
+        "recent_interactions": [
+            {
+                "person_track_id": i.person_track_id,
+                "interaction_type": i.interaction_type,
+                "duration_seconds": i.duration_seconds,
+                "created_at": i.created_at
+            } for i in interactions
+        ],
+        "recent_attention": [
+            {
+                "person_track_id": a.person_track_id,
+                "attention_status": a.attention_status,
+                "duration_seconds": a.duration_seconds,
+                "created_at": a.created_at
+            } for a in attention_history
+        ]
+    }

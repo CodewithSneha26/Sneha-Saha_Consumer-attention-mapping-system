@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
 import './Analytics.css';
+import { Link } from 'react-router-dom';
 
 function Analytics() {
   const [scores, setScores] = useState({});
@@ -38,7 +39,9 @@ function Analytics() {
             {sortedShelves.map(([shelf, data], index) => (
               <div key={shelf} className="score-card">
                 <div className="score-rank">#{index + 1}</div>
-                <h3>{shelf}</h3>
+                <Link to={`/shelf-detail/${encodeURIComponent(shelf)}`} className="shelf-link">
+                  <h3>{shelf}</h3>
+                </Link>
                 <div className="score-value">{data.attractiveness_score}<span>/100</span></div>
                 <div className="score-bar-track">
                   <div

@@ -161,3 +161,16 @@
   margin-top: 4px;
   line-height: 1.5;
 }
+
+.shelf-link {
+  text-decoration: none;
+}
+
+.shelf-link h3 {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.shelf-link:hover h3 {
+  color: #1c7bb0;
+}

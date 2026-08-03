@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
@@ -154,7 +155,9 @@ function Stores() {
           {shelves.map((shelf) => (
             <div key={shelf.id} className="info-card">
               <span className="tag shelf-tag">SHELF</span>
-              <h3>{shelf.shelf_name}</h3>
+              <Link to={`/shelf-detail/${encodeURIComponent(shelf.shelf_name)}`} className="shelf-link">
+                <h3>{shelf.shelf_name}</h3>
+              </Link>
               <p>{getStoreName(shelf.store_id)}</p>
               {shelf.zone && <p className="zone-label">Zone: {shelf.zone}</p>}
             </div>
