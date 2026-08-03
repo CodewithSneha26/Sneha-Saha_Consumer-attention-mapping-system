@@ -6,17 +6,19 @@ import models
 
 # Track how many times each person has looked at each shelf
 repeat_visits = {}  # {(track_id, shelf_name): visit_count}
+
+# Track journey sequence per person
 journey_sequence = {}  # {track_id: current_sequence_number}
+
 # Fetch actual shelves from database to map zones to real shelf names
 db_init = SessionLocal()
 shelves_in_db = db_init.query(models.Shelf).all()
 db_init.close()
 
-# Map our 3 camera zones to real shelf names (if available), else use generic names
 # Dynamically map however many shelves exist (up to 5) to that many horizontal zones
 NUM_ZONES = min(len(shelves_in_db), 5) if len(shelves_in_db) > 0 else 3
 zone_to_shelf = {}
-if NUM_ZONES > 0:
+if NUM_ZONES > 0 and len(shelves_in_db) > 0:
     for i in range(NUM_ZONES):
         zone_to_shelf[f"Zone {i}"] = shelves_in_db[i].shelf_name
 else:
@@ -24,8 +26,6 @@ else:
     zone_to_shelf = {"Zone 0": "Zone A", "Zone 1": "Zone B", "Zone 2": "Zone C"}
 
 print(f"Mapping {NUM_ZONES} zones to shelves: {zone_to_shelf}")
-
-print(f"Zone-to-shelf mapping: {zone_to_shelf}")
 
 Base.metadata.create_all(bind=engine)
 
@@ -76,12 +76,11 @@ while True:
         for box, track_id in zip(results[0].boxes.xyxy, results[0].boxes.id):
             x1, y1, x2, y2 = box.tolist()
             center_x = (x1 + x2) / 2
+            center_y = (y1 + y2) / 2
             track_id = int(track_id)
             zone = get_zone(center_x, frame_width)
 
-            center_y = (y1 + y2) / 2
-
-            # Save this position point for heatmap generation (lightweight, just x/y)
+            # Save position point for heatmap generation
             db_pos = SessionLocal()
             point = models.PositionPoint(
                 person_track_id=track_id,
@@ -91,6 +90,7 @@ while True:
             db_pos.add(point)
             db_pos.commit()
             db_pos.close()
+
             if track_id not in person_state:
                 person_state[track_id] = {
                     "zone": zone,
@@ -142,6 +142,7 @@ while True:
                         db3.add(journey_step)
                         db3.commit()
                         db3.close()
+
                     # Infer interaction type
                     prior_visits_to_shelf = repeat_visits.get(key, 0)
                     zones_visited_by_person = set(
@@ -164,7 +165,6 @@ while True:
                     elif prev["attention"] == "Looking Away" and prior_visits_to_shelf >= 2 and duration < 2:
                         interaction_type = "Product Returned (simulated - quick disengagement)"
 
-                    # This save now runs for ANY interaction_type - Viewed, Picked Up, Purchased, Compared, Returned
                     if interaction_type:
                         db2 = SessionLocal()
                         interaction = models.ProductInteraction(
@@ -184,8 +184,13 @@ while True:
                         "state_start_time": time.time()
                     }
 
-    cv2.line(annotated_frame, (frame_width // 3, 0), (frame_width // 3, frame.shape[0]), (255, 255, 0), 2)
-    cv2.line(annotated_frame, (2 * frame_width // 3, 0), (2 * frame_width // 3, frame.shape[0]), (255, 255, 0), 2)
+    # Show current zone boundaries and labels for easier testing
+    zone_width = frame_width // NUM_ZONES
+    for i in range(NUM_ZONES):
+        x_pos = i * zone_width
+        cv2.line(annotated_frame, (x_pos, 0), (x_pos, frame.shape[0]), (255, 255, 0), 1)
+        cv2.putText(annotated_frame, f"Z{i}", (x_pos + 5, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
     cv2.putText(annotated_frame, f"Attention: {attention_status}", (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
