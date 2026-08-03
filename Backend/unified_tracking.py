@@ -13,15 +13,17 @@ shelves_in_db = db_init.query(models.Shelf).all()
 db_init.close()
 
 # Map our 3 camera zones to real shelf names (if available), else use generic names
+# Dynamically map however many shelves exist (up to 5) to that many horizontal zones
+NUM_ZONES = min(len(shelves_in_db), 5) if len(shelves_in_db) > 0 else 3
 zone_to_shelf = {}
-if len(shelves_in_db) >= 3:
-    zone_to_shelf["Zone A (Left)"] = shelves_in_db[0].shelf_name
-    zone_to_shelf["Zone B (Middle)"] = shelves_in_db[1].shelf_name
-    zone_to_shelf["Zone C (Right)"] = shelves_in_db[2].shelf_name
+if NUM_ZONES > 0:
+    for i in range(NUM_ZONES):
+        zone_to_shelf[f"Zone {i}"] = shelves_in_db[i].shelf_name
 else:
-    zone_to_shelf["Zone A (Left)"] = "Zone A (Left)"
-    zone_to_shelf["Zone B (Middle)"] = "Zone B (Middle)"
-    zone_to_shelf["Zone C (Right)"] = "Zone C (Right)"
+    NUM_ZONES = 3
+    zone_to_shelf = {"Zone 0": "Zone A", "Zone 1": "Zone B", "Zone 2": "Zone C"}
+
+print(f"Mapping {NUM_ZONES} zones to shelves: {zone_to_shelf}")
 
 print(f"Zone-to-shelf mapping: {zone_to_shelf}")
 
@@ -40,12 +42,8 @@ if not cap.isOpened():
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 
 def get_zone(center_x, frame_width):
-    if center_x < frame_width / 3:
-        raw_zone = "Zone A (Left)"
-    elif center_x < 2 * frame_width / 3:
-        raw_zone = "Zone B (Middle)"
-    else:
-        raw_zone = "Zone C (Right)"
+    zone_index = min(int(center_x / (frame_width / NUM_ZONES)), NUM_ZONES - 1)
+    raw_zone = f"Zone {zone_index}"
     return zone_to_shelf.get(raw_zone, raw_zone)
 
 print("Unified tracking started. Press 'q' to quit.")
