@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
+import { useResults } from '../context/ResultsContext';
 import './ShelfDetection.css';
 
 function ShelfDetection() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [results, setResults] = useState(null);
+  const { shelfDetectionResults: results, setShelfDetectionResults: setResults } = useResults();
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e) => {

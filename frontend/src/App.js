@@ -1,3 +1,4 @@
+import { ResultsProvider } from './context/ResultsContext';
 import ShelfDetail from './pages/ShelfDetail';
 import ShelfDetection from './pages/ShelfDetection';
 import React from 'react';
@@ -16,9 +17,10 @@ import './App.css';
 
 function App() {
   return (
-    <Router>
-      <div className="app-container">
-        <Routes>
+    <ResultsProvider>
+      <Router>
+        <div className="app-container">
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Navigate to="/login" />} />
@@ -34,8 +36,9 @@ function App() {
           <Route path="/shelf-detail/:shelfName" element={<ShelfDetail />} />
           <Route path="/video-analysis" element={<VideoAnalysis />} />
         </Routes>
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </ResultsProvider>
   );
 }
 
