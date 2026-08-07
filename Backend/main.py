@@ -5,6 +5,7 @@ import reports_engine
 import alert_engine
 import recommendation_engine
 import scoring_engine
+import generate_heatmap
 import behavior_analysis
 from fastapi import UploadFile, File
 import shutil
@@ -539,3 +540,174 @@ def get_all_behavior_analysis(db: Session = Depends(get_db)):
         if isinstance(result, dict):
             results.append(result)
     return results
+
+@app.post("/analyze-video-full")
+def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool = True):
+    import cv2
+    from ultralytics import YOLO
+
+    upload_folder = "uploaded_videos"
+    os.makedirs(upload_folder, exist_ok=True)
+    file_path = os.path.join(upload_folder, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    db = SessionLocal()
+
+    # Clear old tracking data so this report reflects ONLY this video
+    if clear_previous_data:
+        db.query(models.PositionPoint).delete()
+        db.query(models.AttentionRecord).delete()
+        db.query(models.ProductInteraction).delete()
+        db.commit()
+
+    shelves_in_db = db.query(models.Shelf).all()
+    db.close()
+
+    NUM_ZONES = min(len(shelves_in_db), 5) if len(shelves_in_db) > 0 else 3
+    zone_to_shelf = {}
+    if NUM_ZONES > 0 and len(shelves_in_db) > 0:
+        for i in range(NUM_ZONES):
+            zone_to_shelf[f"Zone {i}"] = shelves_in_db[i].shelf_name
+    else:
+        NUM_ZONES = 3
+        zone_to_shelf = {"Zone 0": "Zone A", "Zone 1": "Zone B", "Zone 2": "Zone C"}
+
+    yolo_model = YOLO("yolov8n.pt")
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+
+    cap = cv2.VideoCapture(file_path)
+    if not cap.isOpened():
+        raise HTTPException(status_code=400, detail="Could not open video file")
+
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30
+
+    def get_zone(center_x):
+        zone_index = min(int(center_x / (frame_width / NUM_ZONES)), NUM_ZONES - 1)
+        return zone_to_shelf.get(f"Zone {zone_index}", f"Zone {zone_index}")
+
+    person_state = {}
+    repeat_visits = {}
+    frame_num = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_num += 1
+
+        results = yolo_model.track(frame, persist=True, verbose=False, classes=[0])
+        gray_full = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        if results[0].boxes.id is not None:
+            for box, track_id in zip(results[0].boxes.xyxy, results[0].boxes.id):
+                x1, y1, x2, y2 = [int(v) for v in box.tolist()]
+                center_x = (x1 + x2) / 2
+                center_y = (y1 + y2) / 2
+                track_id = int(track_id)
+                zone = get_zone(center_x)
+
+                # Try real face/eye detection within this person's bounding box
+                person_region = gray_full[max(0, y1):y2, max(0, x1):x2]
+                attention_status = "Looking Away"
+                if person_region.size > 0:
+                    faces = face_cascade.detectMultiScale(person_region, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20))
+                    for (fx, fy, fw, fh) in faces:
+                        face_gray = person_region[fy:fy + fh, fx:fx + fw]
+                        eyes = eye_cascade.detectMultiScale(face_gray, scaleFactor=1.1, minNeighbors=3)
+                        if len(eyes) >= 1:
+                            attention_status = "Attentive"
+                        break
+
+                db_pos = SessionLocal()
+                point = models.PositionPoint(person_track_id=track_id, x=int(center_x), y=int(center_y))
+                db_pos.add(point)
+                db_pos.commit()
+                db_pos.close()
+
+                if track_id not in person_state:
+                    person_state[track_id] = {"zone": zone, "attention": attention_status, "frame_start": frame_num}
+                else:
+                    prev = person_state[track_id]
+                    if prev["zone"] != zone or prev["attention"] != attention_status:
+                        duration = (frame_num - prev["frame_start"]) / fps
+
+                        db2 = SessionLocal()
+                        record = models.AttentionRecord(
+                            person_track_id=track_id, zone=prev["zone"],
+                            attention_status=prev["attention"], duration_seconds=int(duration)
+                        )
+                        db2.add(record)
+                        db2.commit()
+                        db2.close()
+
+                        key = (track_id, prev["zone"])
+                        repeat_visits[key] = repeat_visits.get(key, 0) + 1
+                        prior_visits = repeat_visits.get(key, 0)
+                        zones_visited = set(z for (pid, z) in repeat_visits.keys() if pid == track_id)
+
+                        interaction_type = None
+                        if prev["attention"] == "Attentive":
+                            if duration >= 6:
+                                interaction_type = "Product Purchased (simulated - very long engagement)"
+                            elif duration >= 3:
+                                interaction_type = "Product Picked Up (simulated)"
+                            elif duration >= 1:
+                                interaction_type = "Product Viewed"
+                            if len(zones_visited) >= 2 and prior_visits >= 2:
+                                interaction_type = "Product Compared (simulated - multiple shelf revisits)"
+                        elif prev["attention"] == "Looking Away" and prior_visits >= 2 and duration < 2:
+                            interaction_type = "Product Returned (simulated - quick disengagement)"
+
+                        if interaction_type:
+                            db3 = SessionLocal()
+                            interaction = models.ProductInteraction(
+                                person_track_id=track_id, shelf_zone=prev["zone"],
+                                interaction_type=interaction_type, duration_seconds=int(duration)
+                            )
+                            db3.add(interaction)
+                            db3.commit()
+                            db3.close()
+
+                        person_state[track_id] = {"zone": zone, "attention": attention_status, "frame_start": frame_num}
+
+    cap.release()
+
+    # Now generate the full report from this fresh data, same as your PDF
+    scores = scoring_engine.calculate_shelf_scores()
+    recs = recommendation_engine.generate_recommendations()
+
+    db4 = SessionLocal()
+    attention_records = db4.query(models.AttentionRecord).all()
+    interactions = db4.query(models.ProductInteraction).all()
+    db4.close()
+
+    interaction_counts = {}
+    for i in interactions:
+        interaction_counts[i.interaction_type] = interaction_counts.get(i.interaction_type, 0) + 1
+
+    total_attention_time = sum(r.duration_seconds for r in attention_records)
+    attentive_count = sum(1 for r in attention_records if r.attention_status == "Attentive")
+
+    # Generate PDF/Excel and heatmaps from this exact data
+    pdf_path = reports_engine.generate_pdf_report()
+    excel_path = reports_engine.generate_excel_report()
+    generate_heatmap.generate_store_heatmap()
+    generate_heatmap.generate_traffic_heatmap()
+    generate_heatmap.generate_shelf_heatmaps()
+    generate_heatmap.generate_product_attention_heatmap()
+
+    return {
+        "filename": file.filename,
+        "frames_processed": frame_num,
+        "unique_people_tracked": len(person_state),
+        "shelf_scores": scores,
+        "recommendations": recs,
+        "interaction_summary": interaction_counts,
+        "total_attention_time_seconds": total_attention_time,
+        "total_attentive_events": attentive_count,
+        "pdf_report_url": "/reports/pdf",
+        "excel_report_url": "/reports/excel"
+    }

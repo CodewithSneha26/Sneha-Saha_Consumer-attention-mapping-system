@@ -9,6 +9,7 @@ import Stores from './pages/Stores';
 import Analytics from './pages/Analytics';
 import Heatmaps from './pages/Heatmaps';
 import Reports from './pages/Reports';
+import VideoAnalysis from './pages/VideoAnalysis';
 import StoreManagerDashboard from './pages/StoreManagerDashboard';
 import RetailAnalystDashboard from './pages/RetailAnalystDashboard';
 import MarketingManagerDashboard from './pages/MarketingManagerDashboard';
@@ -35,6 +36,7 @@ function App() {
           <Route path="/shelf-detection" element={<ShelfDetection />} />
           <Route path="/video-traffic" element={<VideoTraffic />} />
           <Route path="/shelf-detail/:shelfName" element={<ShelfDetail />} />
+          <Route path="/video-analysis" element={<VideoAnalysis />} />
         </Routes>
       </div>
     </Router>
