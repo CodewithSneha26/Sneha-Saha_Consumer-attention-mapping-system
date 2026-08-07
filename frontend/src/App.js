@@ -7,7 +7,6 @@ import Register from './pages/Register';
 import Stores from './pages/Stores';
 import Analytics from './pages/Analytics';
 import Heatmaps from './pages/Heatmaps';
-import Reports from './pages/Reports';
 import VideoAnalysis from './pages/VideoAnalysis';
 import StoreManagerDashboard from './pages/StoreManagerDashboard';
 import RetailAnalystDashboard from './pages/RetailAnalystDashboard';
@@ -26,7 +25,6 @@ function App() {
           <Route path="/stores" element={<Stores />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/heatmaps" element={<Heatmaps />} />
-          <Route path="/reports" element={<Reports />} />
           <Route path="/store-manager-dashboard" element={<StoreManagerDashboard />} />
           <Route path="/retail-analyst-dashboard" element={<RetailAnalystDashboard />} />
           <Route path="/marketing-manager-dashboard" element={<MarketingManagerDashboard />} />

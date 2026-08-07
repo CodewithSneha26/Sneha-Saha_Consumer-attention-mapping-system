@@ -37,7 +37,6 @@ function Navbar() {
         <Link to="/heatmaps" className={isActive('/heatmaps') ? 'active' : ''}>Heatmaps</Link>
         <Link to="/shelf-detection" className={isActive('/shelf-detection') ? 'active' : ''}>Shelf Detection</Link>
         <Link to="/video-analysis" className={isActive('/video-analysis') ? 'active' : ''}>Video Analysis</Link>
-        <Link to="/reports" className={isActive('/reports') ? 'active' : ''}>Reports</Link>
       </nav>
       <button onClick={handleLogout} className="logout-btn">Logout</button>
     </header>
