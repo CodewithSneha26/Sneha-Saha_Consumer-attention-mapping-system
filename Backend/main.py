@@ -574,6 +574,8 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         zone_to_shelf = {"Zone 0": "Zone A", "Zone 1": "Zone B", "Zone 2": "Zone C"}
 
     yolo_model = YOLO("yolov8n.pt")
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 
     cap = cv2.VideoCapture(file_path)
     if not cap.isOpened():
@@ -608,6 +610,10 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
 
         results = yolo_model.track(frame_small, persist=True, verbose=False, classes=[0])
 
+        # Only run face/eye detection every 5th processed frame (real detection, but not every frame, for speed)
+        run_attention_check = (frame_num // 3) % 5 == 0
+        gray_full = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if run_attention_check else None
+
         if results[0].boxes.id is not None:
             for box, track_id in zip(results[0].boxes.xyxy, results[0].boxes.id):
                 x1s, y1s, x2s, y2s = [int(v) for v in box.tolist()]
@@ -617,8 +623,19 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
                 track_id = int(track_id)
                 zone = get_zone(center_x)
 
-                # Simplified attention for dataset video speed
-                attention_status = "Attentive"
+                # Real face/eye attention detection, run periodically for speed
+                attention_status = "Attentive"  # default carries forward between checks
+                if run_attention_check and gray_full is not None:
+                    person_region = gray_full[max(0, y1):y2, max(0, x1):x2]
+                    if person_region.size > 0:
+                        attention_status = "Looking Away"
+                        faces = face_cascade.detectMultiScale(person_region, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20))
+                        for (fx, fy, fw, fh) in faces:
+                            face_gray = person_region[fy:fy + fh, fx:fx + fw]
+                            eyes = eye_cascade.detectMultiScale(face_gray, scaleFactor=1.1, minNeighbors=3)
+                            if len(eyes) >= 1:
+                                attention_status = "Attentive"
+                            break
 
                 all_positions.append(models.PositionPoint(person_track_id=track_id, x=int(center_x), y=int(center_y)))
 
