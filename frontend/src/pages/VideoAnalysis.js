@@ -1,3 +1,4 @@
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
@@ -103,25 +104,40 @@ function VideoAnalysis() {
             </div>
 
             <h3>1. Shelf Performance & Attractiveness Scores</h3>
-            <table className="report-table-full">
-              <thead>
-                <tr>
-                  <th>Shelf</th><th>Score</th><th>Visibility</th><th>Engagement</th><th>Conversion</th><th>Marketing</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(results.shelf_scores).map(([shelf, d]) => (
-                  <tr key={shelf}>
-                    <td>{shelf}</td>
-                    <td>{d.attractiveness_score}</td>
-                    <td>{d.shelf_visibility_score}</td>
-                    <td>{d.engagement_score}</td>
-                    <td>{d.conversion_potential_score}%</td>
-                    <td>{d.marketing_effectiveness_score}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="shelf-bar-chart-card">
+              <ResponsiveContainer width="100%" height={Object.keys(results.shelf_scores).length * 90}>
+                <BarChart
+                  layout="vertical"
+                  data={Object.entries(results.shelf_scores).map(([shelf, d]) => ({
+                    shelf,
+                    Score: d.attractiveness_score,
+                    Visibility: d.shelf_visibility_score,
+                    Engagement: d.engagement_score,
+                    Conversion: d.conversion_potential_score,
+                    Marketing: d.marketing_effectiveness_score,
+                  }))}
+                  margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                  barGap={4}
+                  barCategoryGap={24}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" horizontal={false} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <YAxis
+                    type="category"
+                    dataKey="shelf"
+                    width={170}
+                    tick={{ fontSize: 12, fill: '#14324d' }}
+                  />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Score" fill="#1c7bb0" radius={[0, 4, 4, 0]} barSize={12} />
+                  <Bar dataKey="Visibility" fill="#7fc4ec" radius={[0, 4, 4, 0]} barSize={12} />
+                  <Bar dataKey="Engagement" fill="#1f9d55" radius={[0, 4, 4, 0]} barSize={12} />
+                  <Bar dataKey="Conversion" fill="#f2a35c" radius={[0, 4, 4, 0]} barSize={12} />
+                  <Bar dataKey="Marketing" fill="#ef6f6f" radius={[0, 4, 4, 0]} barSize={12} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
            <h3>2. Product Engagement Summary</h3>
             <table className="report-table-full">

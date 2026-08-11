@@ -267,3 +267,10 @@
   color: #3a5568;
   line-height: 1.4;
 }
+
+.shelf-bar-chart-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+}
