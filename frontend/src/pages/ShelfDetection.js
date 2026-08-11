@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
 import { useResults } from '../context/ResultsContext';
@@ -7,8 +7,16 @@ import './ShelfDetection.css';
 function ShelfDetection() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [selectedShelf, setSelectedShelf] = useState('');
+  const [shelves, setShelves] = useState([]);
+  const [shelfScores, setShelfScores] = useState({});
   const { shelfDetectionResults: results, setShelfDetectionResults: setResults } = useResults();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.get('/shelves').then(res => setShelves(res.data));
+    api.get('/shelf-scores').then(res => setShelfScores(res.data));
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -55,6 +63,17 @@ function ShelfDetection() {
         </p>
 
         <div className="upload-section">
+          <select
+            className="shelf-select-dropdown"
+            value={selectedShelf}
+            onChange={(e) => setSelectedShelf(e.target.value)}
+          >
+            <option value="">Which shelf is this photo of?</option>
+            {shelves.map((s) => (
+              <option key={s.id} value={s.shelf_name}>{s.shelf_name}</option>
+            ))}
+          </select>
+
           <label className="upload-box">
             <input type="file" accept="image/*" onChange={handleFileChange} hidden />
             {previewUrl ? (
@@ -72,6 +91,27 @@ function ShelfDetection() {
         {results && (
           <div className="results-section">
             <h3>Detection Results</h3>
+
+            {selectedShelf && shelfScores[selectedShelf] && (
+              <div className="shelf-insight-banner">
+                <div className="insight-stat">
+                  <span className="insight-value">{results.total_detections}</span>
+                  <span className="insight-label">Products on Shelf (from photo)</span>
+                </div>
+                <div className="insight-vs">vs</div>
+                <div className="insight-stat">
+                  <span className="insight-value">{shelfScores[selectedShelf].attractiveness_score}</span>
+                  <span className="insight-label">Consumer Attention Score</span>
+                </div>
+                <p className="insight-text">
+                  {shelfScores[selectedShelf].attractiveness_score < 30 && results.total_detections > 20
+                    ? `⚠️ "${selectedShelf}" is heavily stocked but getting low attention — consider repositioning or improving visibility.`
+                    : shelfScores[selectedShelf].attractiveness_score >= 50
+                    ? `✅ "${selectedShelf}" is performing well — this stocking level is working.`
+                    : `This shelf has moderate attention relative to its stock level — monitor for optimization opportunities.`}
+                </p>
+              </div>
+            )}
 
             <img
               src={`http://127.0.0.1:8000${results.annotated_image_url}`}

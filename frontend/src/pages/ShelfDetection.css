@@ -165,3 +165,60 @@
   margin-bottom: 20px;
   border: 1px solid #eef2f6;
 }
+
+.shelf-select-dropdown {
+  width: 100%;
+  background: #f7fbff;
+  border: 1px solid #dceaf5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #14324d;
+  margin-bottom: 16px;
+}
+
+.shelf-insight-banner {
+  background: #f5faff;
+  border: 1px solid #dceaf5;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.insight-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.insight-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1c7bb0;
+}
+
+.insight-label {
+  font-size: 11px;
+  color: #6b8299;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.insight-vs {
+  font-size: 13px;
+  color: #a9bccf;
+  font-weight: 600;
+}
+
+.insight-text {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: #14324d;
+  padding-top: 12px;
+  border-top: 1px solid #dceaf5;
+  line-height: 1.5;
+}
