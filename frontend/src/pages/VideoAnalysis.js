@@ -171,16 +171,37 @@ function VideoAnalysis() {
             </div>
 
             <h3>4. Conversion Report</h3>
-            <table className="report-table-full">
-              <thead><tr><th>Shelf</th><th>Total Interactions</th><th>Purchased</th><th>Conversion Rate</th></tr></thead>
-              <tbody>
-                {Object.entries(results.shelf_scores).map(([shelf, d]) => (
-                  <tr key={shelf}>
-                    <td>{shelf}</td><td>{d.total_interactions}</td><td>{d.purchased_count}</td><td>{d.conversion_potential_score}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="conversion-chart-card">
+              <ResponsiveContainer width="100%" height={Object.keys(results.shelf_scores).length * 70}>
+                <BarChart
+                  layout="vertical"
+                  data={Object.entries(results.shelf_scores).map(([shelf, d]) => ({
+                    shelf,
+                    'Total Interactions': d.total_interactions,
+                    'Purchased': d.purchased_count,
+                  }))}
+                  margin={{ top: 10, right: 40, left: 10, bottom: 10 }}
+                  barGap={4}
+                  barCategoryGap={20}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                  <YAxis
+                    type="category"
+                    dataKey="shelf"
+                    width={170}
+                    tick={{ fontSize: 12, fill: '#14324d' }}
+                  />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Total Interactions" fill="#7fc4ec" radius={[0, 4, 4, 0]} barSize={16} />
+                  <Bar dataKey="Purchased" fill="#1f9d55" radius={[0, 4, 4, 0]} barSize={16} />
+                </BarChart>
+              </ResponsiveContainer>
+              <p className="conversion-insight">
+                💡 The gap between the two bars shows how many interactions did <strong>not</strong> convert to a purchase — a large gap signals a conversion opportunity.
+              </p>
+            </div>
 
             <h3>5. Marketing Effectiveness Report</h3>
             <table className="report-table-full">
