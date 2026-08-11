@@ -14,8 +14,8 @@ function ShelfDetection() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.get('/shelves').then(res => setShelves(res.data));
-    api.get('/shelf-scores').then(res => setShelfScores(res.data));
+    api.get('/shelves').then((res) => setShelves(res.data)).catch((err) => console.error('Failed to load shelves:', err));
+    api.get('/shelf-scores').then((res) => setShelfScores(res.data)).catch((err) => console.error('Failed to load scores:', err));
   }, []);
 
   const handleFileChange = (e) => {
@@ -47,7 +47,6 @@ function ShelfDetection() {
     }
   };
 
-  // Count how many of each class were detected
   const classCounts = results?.detections.reduce((acc, d) => {
     acc[d.class] = (acc[d.class] || 0) + 1;
     return acc;
@@ -68,7 +67,7 @@ function ShelfDetection() {
             value={selectedShelf}
             onChange={(e) => setSelectedShelf(e.target.value)}
           >
-            <option value="">Which shelf is this photo of?</option>
+            <option value="">Which shelf is this photo of? (optional)</option>
             {shelves.map((s) => (
               <option key={s.id} value={s.shelf_name}>{s.shelf_name}</option>
             ))}
@@ -96,7 +95,7 @@ function ShelfDetection() {
               <div className="shelf-insight-banner">
                 <div className="insight-stat">
                   <span className="insight-value">{results.total_detections}</span>
-                  <span className="insight-label">Products on Shelf (from photo)</span>
+                  <span className="insight-label">Products Detected (from photo)</span>
                 </div>
                 <div className="insight-vs">vs</div>
                 <div className="insight-stat">
@@ -113,29 +112,15 @@ function ShelfDetection() {
               </div>
             )}
 
-            <img
-              src={`http://127.0.0.1:8000${results.annotated_image_url}`}
-              alt="Annotated detection result"
-              className="annotated-result-image"
-            />
-
             <div className="results-summary">
               <div className="summary-stat">
-                <span className="summary-value">{results.named_detections_count}</span>
-                <span className="summary-label">Named (YOLO) Detections</span>
-              </div>
-              <div className="summary-stat">
-                <span className="summary-value">{results.generic_regions_count}</span>
-                <span className="summary-label">Generic Product Regions</span>
-              </div>
-              <div className="summary-stat">
-                <span className="summary-value">{results.estimated_total_products}</span>
-                <span className="summary-label">Estimated Total Products</span>
+                <span className="summary-value">{results.total_detections}</span>
+                <span className="summary-label">Total Objects Detected</span>
               </div>
             </div>
 
             <div className="class-breakdown">
-              {Object.entries(classCounts).map(([className, count]) => (
+              {Object.entries(classCounts || {}).map(([className, count]) => (
                 <div key={className} className="class-chip">
                   <span className="class-name">{className}</span>
                   <span className="class-count">{count}</span>

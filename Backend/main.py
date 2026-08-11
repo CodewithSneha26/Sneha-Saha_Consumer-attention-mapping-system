@@ -1,6 +1,5 @@
 from jose import jwt
 from fastapi.responses import FileResponse
-from fastapi.responses import FileResponse
 import reports_engine
 import alert_engine
 import recommendation_engine
@@ -46,15 +45,12 @@ def detect_generic_product_regions(image_path):
     img = cv2.imread(image_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Reduce noise, then detect edges
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edges = cv2.Canny(blurred, 50, 150)
 
-    # Dilate edges slightly to connect nearby lines into solid shapes
     kernel = np.ones((5, 5), np.uint8)
     dilated = cv2.dilate(edges, kernel, iterations=2)
 
-    # Find contours (outlines of connected shapes)
     contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     img_area = img.shape[0] * img.shape[1]
@@ -62,11 +58,9 @@ def detect_generic_product_regions(image_path):
 
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        # Filter out tiny noise and overly large regions (background/whole image)
         if img_area * 0.001 < area < img_area * 0.05:
             x, y, w, h = cv2.boundingRect(cnt)
             aspect_ratio = w / h if h > 0 else 0
-            # Product packaging is usually somewhat rectangular, not extremely thin/wide
             if 0.2 < aspect_ratio < 5:
                 regions.append({"x": x, "y": y, "w": w, "h": h})
 
@@ -182,7 +176,6 @@ def get_cameras(db: Session = Depends(get_db)):
 
 @app.post("/detect-people")
 def detect_people_endpoint(file: UploadFile = File(...)):
-    # Save the uploaded image temporarily
     upload_folder = "uploaded_images"
     os.makedirs(upload_folder, exist_ok=True)
     
@@ -190,7 +183,6 @@ def detect_people_endpoint(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    # Run detection
     result = detection.detect_people(file_path)
     
     return result
@@ -238,7 +230,6 @@ def get_heatmap(filename: str):
 
 @app.post("/heatmaps/generate")
 def generate_heatmaps():
-    import generate_heatmap
     generate_heatmap.generate_store_heatmap()
     generate_heatmap.generate_traffic_heatmap()
     zone_durations = generate_heatmap.generate_shelf_heatmaps()
@@ -265,9 +256,9 @@ def detect_shelf_products(file: UploadFile = File(...)):
     from ultralytics import YOLO
     import cv2
 
-    # YOLO detection (named categories, COCO-limited)
-    model = YOLO("yolov8m.pt")
-    results = model(file_path, conf=0.15)
+    # Using fast "nano" model for speed
+    model = YOLO("yolov8n.pt")
+    results = model(file_path, conf=0.25)
 
     detections = []
     annotated_frame = None
@@ -279,10 +270,8 @@ def detect_shelf_products(file: UploadFile = File(...)):
             })
         annotated_frame = r.plot()
 
-    # Generic region detection (catches products YOLO doesn't recognize by name)
     generic_regions, original_img = detect_generic_product_regions(file_path)
 
-    # Draw generic regions in a different color (yellow) on the same annotated image
     for region in generic_regions:
         cv2.rectangle(
             annotated_frame,
@@ -359,123 +348,18 @@ def detect_video_traffic(file: UploadFile = File(...)):
         "note": "Validated multi-person tracking on uploaded video footage, confirming the system works on real-world retail traffic, not just live webcam input."
     }
 
-@app.post("/tracking/start-session")
-def start_tracking_session(duration_seconds: int = 20):
-    import cv2
-    from ultralytics import YOLO
-    import time
-
-    yolo_model = YOLO("yolov8n.pt")
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-    eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
-
-    db_init = SessionLocal()
-    shelves_in_db = db_init.query(models.Shelf).all()
-    db_init.close()
-
-    zone_to_shelf = {}
-    if len(shelves_in_db) >= 3:
-        zone_to_shelf["Zone A (Left)"] = shelves_in_db[0].shelf_name
-        zone_to_shelf["Zone B (Middle)"] = shelves_in_db[1].shelf_name
-        zone_to_shelf["Zone C (Right)"] = shelves_in_db[2].shelf_name
-    else:
-        zone_to_shelf["Zone A (Left)"] = "Zone A (Left)"
-        zone_to_shelf["Zone B (Middle)"] = "Zone B (Middle)"
-        zone_to_shelf["Zone C (Right)"] = "Zone C (Right)"
-
-    def get_zone(center_x, frame_width):
-        if center_x < frame_width / 3:
-            raw_zone = "Zone A (Left)"
-        elif center_x < 2 * frame_width / 3:
-            raw_zone = "Zone B (Middle)"
-        else:
-            raw_zone = "Zone C (Right)"
-        return zone_to_shelf.get(raw_zone, raw_zone)
-
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        raise HTTPException(status_code=400, detail="Could not access webcam")
-
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    person_state = {}
-    records_saved = 0
-    start_time = time.time()
-
-    while time.time() - start_time < duration_seconds:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame = cv2.flip(frame, 1)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        results = yolo_model.track(frame, persist=True, verbose=False, classes=[0])
-
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
-        attention_status = "Looking Away"
-        for (fx, fy, fw, fh) in faces:
-            face_gray = gray[fy:fy + fh, fx:fx + fw]
-            eyes = eye_cascade.detectMultiScale(face_gray, scaleFactor=1.1, minNeighbors=5)
-            if len(eyes) >= 2:
-                attention_status = "Attentive"
-            break
-
-        if results[0].boxes.id is not None:
-            for box, track_id in zip(results[0].boxes.xyxy, results[0].boxes.id):
-                x1, y1, x2, y2 = box.tolist()
-                center_x = (x1 + x2) / 2
-                center_y = (y1 + y2) / 2
-                track_id = int(track_id)
-                zone = get_zone(center_x, frame_width)
-
-                db_pos = SessionLocal()
-                point = models.PositionPoint(person_track_id=track_id, x=int(center_x), y=int(center_y))
-                db_pos.add(point)
-                db_pos.commit()
-                db_pos.close()
-
-                if track_id not in person_state:
-                    person_state[track_id] = {"zone": zone, "attention": attention_status, "state_start_time": time.time()}
-                else:
-                    prev = person_state[track_id]
-                    if prev["zone"] != zone or prev["attention"] != attention_status:
-                        duration = time.time() - prev["state_start_time"]
-                        db = SessionLocal()
-                        record = models.AttentionRecord(
-                            person_track_id=track_id, zone=prev["zone"],
-                            attention_status=prev["attention"], duration_seconds=int(duration)
-                        )
-                        db.add(record)
-                        db.commit()
-                        db.close()
-                        records_saved += 1
-                        person_state[track_id] = {"zone": zone, "attention": attention_status, "state_start_time": time.time()}
-
-    cap.release()
-
-    return {
-        "status": "Tracking session complete",
-        "duration_seconds": duration_seconds,
-        "unique_people_tracked": len(person_state),
-        "attention_records_saved": records_saved
-    }
-
 @app.get("/shelf-detail/{shelf_name}")
 def get_shelf_detail(shelf_name: str, db: Session = Depends(get_db)):
-    # Get score data for this specific shelf
     all_scores = scoring_engine.calculate_shelf_scores()
     shelf_score = all_scores.get(shelf_name, None)
 
-    # Get recommendations for this specific shelf
     all_recs = recommendation_engine.generate_recommendations()
     shelf_recs = next((r for r in all_recs if r["shelf"] == shelf_name), None)
 
-    # Get interaction history for this shelf
     interactions = db.query(models.ProductInteraction).filter(
         models.ProductInteraction.shelf_zone == shelf_name
     ).order_by(models.ProductInteraction.created_at.desc()).limit(20).all()
 
-    # Get attention history for this shelf
     attention_history = db.query(models.AttentionRecord).filter(
         models.AttentionRecord.zone == shelf_name
     ).order_by(models.AttentionRecord.created_at.desc()).limit(20).all()
@@ -554,7 +438,6 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
 
     db = SessionLocal()
 
-    # Clear old tracking data so this report reflects ONLY this video
     if clear_previous_data:
         db.query(models.PositionPoint).delete()
         db.query(models.AttentionRecord).delete()
@@ -603,15 +486,14 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         if frame_num % 3 != 0:
             continue
 
-        # Resize down for faster YOLO inference on large videos
         frame_small = cv2.resize(frame, (640, int(640 * frame.shape[0] / frame.shape[1])))
         scale_x = frame.shape[1] / frame_small.shape[1]
         scale_y = frame.shape[0] / frame_small.shape[0]
 
         results = yolo_model.track(frame_small, persist=True, verbose=False, classes=[0])
 
-        # Only run face/eye detection every 5th processed frame (real detection, but not every frame, for speed)
-        run_attention_check = (frame_num // 3) % 5 == 0
+        # Only run face/eye detection every 10th processed frame - big speed gain
+        run_attention_check = (frame_num // 3) % 10 == 0
         gray_full = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if run_attention_check else None
 
         if results[0].boxes.id is not None:
@@ -623,8 +505,7 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
                 track_id = int(track_id)
                 zone = get_zone(center_x)
 
-                # Real face/eye attention detection, run periodically for speed
-                attention_status = "Attentive"  # default carries forward between checks
+                attention_status = "Attentive"
                 if run_attention_check and gray_full is not None:
                     person_region = gray_full[max(0, y1):y2, max(0, x1):x2]
                     if person_region.size > 0:
@@ -687,14 +568,12 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
 
     cap.release()
 
-    # Batch-insert all position points at once (much faster than one-by-one)
     if all_positions:
         db_batch = SessionLocal()
         db_batch.bulk_save_objects(all_positions)
         db_batch.commit()
         db_batch.close()
 
-    # Now generate the full report from this fresh data, same as your PDF
     scores = scoring_engine.calculate_shelf_scores()
     recs = recommendation_engine.generate_recommendations()
 
@@ -710,7 +589,6 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
     total_attention_time = sum(r.duration_seconds for r in attention_records)
     attentive_count = sum(1 for r in attention_records if r.attention_status == "Attentive")
 
-    # Generate PDF/Excel and heatmaps from this exact data
     pdf_path = reports_engine.generate_pdf_report()
     excel_path = reports_engine.generate_excel_report()
     generate_heatmap.generate_store_heatmap()
