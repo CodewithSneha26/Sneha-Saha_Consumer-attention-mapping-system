@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
@@ -140,14 +140,30 @@ function VideoAnalysis() {
             </div>
 
            <h3>2. Product Engagement Summary</h3>
-            <table className="report-table-full">
-              <thead><tr><th>Interaction Type</th><th>Count</th></tr></thead>
-              <tbody>
-                {Object.entries(results.interaction_summary).map(([type, count]) => (
-                  <tr key={type}><td>{type}</td><td>{count}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="engagement-pie-card">
+              <ResponsiveContainer width="100%" height={380}>
+                <PieChart>
+                  <Pie
+                    data={Object.entries(results.interaction_summary).map(([type, count]) => ({
+                      name: type.split('(')[0].trim(),
+                      value: count
+                    }))}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={130}
+                    label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                    labelLine={true}
+                  >
+                    {Object.entries(results.interaction_summary).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={['#1c7bb0', '#1f9d55', '#f2a35c', '#ef6f6f', '#7fc4ec'][index % 5]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
             <h3>3. Consumer Attention Summary</h3>
             <div className="summary-box">
               <p>Total recorded attention time: <strong>{results.total_attention_time_seconds} seconds</strong></p>

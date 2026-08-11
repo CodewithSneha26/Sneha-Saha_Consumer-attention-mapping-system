@@ -274,3 +274,10 @@
   padding: 20px;
   box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
 }
+
+.engagement-pie-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+}
