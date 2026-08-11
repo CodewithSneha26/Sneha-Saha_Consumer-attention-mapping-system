@@ -1,3 +1,4 @@
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
@@ -104,6 +105,26 @@ function VideoAnalysis() {
 
             <h3>1. Shelf Performance & Attractiveness Scores</h3>
             <table className="report-table-full">
+            <h3>Shelf Engagement Overview</h3>
+            <div className="chart-card">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={Object.entries(results.shelf_scores).map(([shelf, d]) => ({
+                  shelf: shelf.length > 15 ? shelf.substring(0, 15) + '...' : shelf,
+                  Score: d.attractiveness_score,
+                  Visibility: d.shelf_visibility_score,
+                  Engagement: d.engagement_score,
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" />
+                  <XAxis dataKey="shelf" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Score" fill="#1c7bb0" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Visibility" fill="#7fc4ec" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Engagement" fill="#1f9d55" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
               <thead>
                 <tr>
                   <th>Shelf</th><th>Score</th><th>Visibility</th><th>Engagement</th><th>Conversion</th><th>Marketing</th>
@@ -124,14 +145,39 @@ function VideoAnalysis() {
             </table>
 
             <h3>2. Product Engagement Summary</h3>
-            <table className="report-table-full">
-              <thead><tr><th>Interaction Type</th><th>Count</th></tr></thead>
-              <tbody>
-                {Object.entries(results.interaction_summary).map(([type, count]) => (
-                  <tr key={type}><td>{type}</td><td>{count}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="chart-and-table">
+              <div className="chart-card">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={Object.entries(results.interaction_summary).map(([type, count]) => ({
+                        name: type.split('(')[0].trim(),
+                        value: count
+                      }))}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={90}
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {Object.entries(results.interaction_summary).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={['#1c7bb0', '#1f9d55', '#f2a35c', '#ef6f6f', '#7fc4ec'][index % 5]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <table className="report-table-full">
+                <thead><tr><th>Interaction Type</th><th>Count</th></tr></thead>
+                <tbody>
+                  {Object.entries(results.interaction_summary).map(([type, count]) => (
+                    <tr key={type}><td>{type}</td><td>{count}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <h3>3. Consumer Attention Summary</h3>
             <div className="summary-box">
