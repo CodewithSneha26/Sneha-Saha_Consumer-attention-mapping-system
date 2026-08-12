@@ -543,15 +543,15 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
 
                         interaction_type = None
                         if prev["attention"] == "Attentive":
-                            if duration >= 6:
+                            if duration >= 3:
                                 interaction_type = "Product Purchased (simulated - very long engagement)"
-                            elif duration >= 3:
+                            elif duration >= 1.5:
                                 interaction_type = "Product Picked Up (simulated)"
-                            elif duration >= 1:
+                            elif duration >= 0.5:
                                 interaction_type = "Product Viewed"
                             if len(zones_visited) >= 2 and prior_visits >= 2:
                                 interaction_type = "Product Compared (simulated - multiple shelf revisits)"
-                        elif prev["attention"] == "Looking Away" and prior_visits >= 2 and duration < 2:
+                        elif prev["attention"] == "Looking Away" and prior_visits >= 2 and duration < 1:
                             interaction_type = "Product Returned (simulated - quick disengagement)"
 
                         if interaction_type:
