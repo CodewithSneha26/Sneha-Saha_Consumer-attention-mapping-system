@@ -482,15 +482,15 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
             break
         frame_num += 1
 
-        # Skip frames for speed - process every 3rd frame only
-        if frame_num % 3 != 0:
+        # Skip fewer frames for better tracking continuity (every 2nd instead of every 3rd)
+        if frame_num % 2 != 0:
             continue
 
-        frame_small = cv2.resize(frame, (640, int(640 * frame.shape[0] / frame.shape[1])))
+        frame_small = cv2.resize(frame, (960, int(960 * frame.shape[0] / frame.shape[1])))
         scale_x = frame.shape[1] / frame_small.shape[1]
         scale_y = frame.shape[0] / frame_small.shape[0]
 
-        results = yolo_model.track(frame_small, persist=True, verbose=False, classes=[0])
+        results = yolo_model.track(frame_small, persist=True, verbose=False, classes=[0], tracker="bytetrack.yaml")
 
         # Only run face/eye detection every 10th processed frame - big speed gain
         run_attention_check = (frame_num // 3) % 10 == 0
@@ -527,6 +527,11 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
                     if prev["zone"] != zone or prev["attention"] != attention_status:
                         duration = (frame_num - prev["frame_start"]) / fps
 
+                        # Skip unrealistically short events - these are tracking noise, not real behavior
+                        if duration < 0.5:
+                            person_state[track_id] = {"zone": zone, "attention": attention_status, "frame_start": frame_num}
+                            continue
+
                         db2 = SessionLocal()
                         record = models.AttentionRecord(
                             person_track_id=track_id, zone=prev["zone"],
@@ -543,11 +548,11 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
 
                         interaction_type = None
                         if prev["attention"] == "Attentive":
-                            if duration >= 3:
+                            if duration >= 1.5:
                                 interaction_type = "Product Purchased (simulated - very long engagement)"
-                            elif duration >= 1.5:
+                            elif duration >= 0.7:
                                 interaction_type = "Product Picked Up (simulated)"
-                            elif duration >= 0.5:
+                            elif duration >= 0.2:
                                 interaction_type = "Product Viewed"
                             if len(zones_visited) >= 2 and prior_visits >= 2:
                                 interaction_type = "Product Compared (simulated - multiple shelf revisits)"
