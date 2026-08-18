@@ -297,3 +297,23 @@
   border-top: 1px solid #eef2f6;
   line-height: 1.5;
 }
+
+
+.video-heatmap-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+  margin-bottom: 20px;
+}
+
+.video-heatmap-card img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.heatmap-caption {
+  font-size: 12px;
+  color: #6b8299;
+  margin-top: 10px;
+}

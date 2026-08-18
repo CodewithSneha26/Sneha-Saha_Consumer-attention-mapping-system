@@ -348,6 +348,7 @@ def detect_video_traffic(file: UploadFile = File(...)):
         "note": "Validated multi-person tracking on uploaded video footage, confirming the system works on real-world retail traffic, not just live webcam input."
     }
 
+
 @app.get("/shelf-detail/{shelf_name}")
 def get_shelf_detail(shelf_name: str, db: Session = Depends(get_db)):
     all_scores = scoring_engine.calculate_shelf_scores()
@@ -364,10 +365,23 @@ def get_shelf_detail(shelf_name: str, db: Session = Depends(get_db)):
         models.AttentionRecord.zone == shelf_name
     ).order_by(models.AttentionRecord.created_at.desc()).limit(20).all()
 
+    # Find which shoppers visited THIS shelf and their behavior segments
+    visitor_ids = set(i.person_track_id for i in interactions) | set(a.person_track_id for a in attention_history)
+    visitor_segments = []
+    for pid in visitor_ids:
+        result = behavior_analysis.classify_shopper(pid, db)
+        if isinstance(result, dict):
+            visitor_segments.append({
+                "person_track_id": pid,
+                "segment": result["segment"],
+                "total_time_seconds": result["total_time_seconds"]
+            })
+
     return {
         "shelf_name": shelf_name,
         "score": shelf_score,
         "recommendations": shelf_recs["recommendations"] if shelf_recs else [],
+        "visitor_segments": visitor_segments,
         "recent_interactions": [
             {
                 "person_track_id": i.person_track_id,
@@ -385,7 +399,6 @@ def get_shelf_detail(shelf_name: str, db: Session = Depends(get_db)):
             } for a in attention_history
         ]
     }
-
 @app.delete("/stores/{store_id}")
 def delete_store(store_id: int, db: Session = Depends(get_db)):
     store = db.query(models.Store).filter(models.Store.id == store_id).first()

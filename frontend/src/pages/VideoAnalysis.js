@@ -94,6 +94,14 @@ function VideoAnalysis() {
               </div>
             </div>
 
+            <h3>Attention Heatmap</h3>
+            <div className="video-heatmap-card">
+              <img
+                src={`http://127.0.0.1:8000/heatmaps/heatmap_1_store.png?t=${Date.now()}`}
+                alt="Store heatmap for this video"
+              />
+              <p className="heatmap-caption">Shows where shoppers spent the most time during this video, based on tracked positions.</p>
+            </div>
             <div className="download-row">
               <button onClick={() => downloadFile(results.pdf_report_url, 'video_analysis_report.pdf')}>
                 Download PDF Report

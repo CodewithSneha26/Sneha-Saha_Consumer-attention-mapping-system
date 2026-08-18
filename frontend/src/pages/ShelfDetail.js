@@ -78,6 +78,20 @@ function ShelfDetail() {
           ))}
         </div>
 
+        <h3>Shopper Types Who Visited This Shelf</h3>
+        {data.visitor_segments && data.visitor_segments.length > 0 ? (
+          <div className="visitor-segments-grid">
+            {data.visitor_segments.map((v, idx) => (
+              <div key={idx} className="visitor-segment-chip">
+                <span className="visitor-id">#{v.person_track_id}</span>
+                <span className="visitor-segment-badge">{v.segment}</span>
+                <span className="visitor-time">{v.total_time_seconds}s total</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No visitor data yet.</p>
+        )}
         <h3>Recent Product Interactions</h3>
         <div className="history-table">
           <div className="history-row header-row">

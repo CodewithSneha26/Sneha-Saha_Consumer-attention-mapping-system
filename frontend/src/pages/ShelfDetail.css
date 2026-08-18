@@ -136,3 +136,39 @@
 .status-neutral {
   color: #a9bccf;
 }
+
+
+.visitor-segments-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.visitor-segment-chip {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.visitor-id {
+  font-weight: 700;
+  color: #14324d;
+}
+
+.visitor-segment-badge {
+  background: #eaf6ff;
+  color: #1c7bb0;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.visitor-time {
+  color: #8b9cb0;
+}
