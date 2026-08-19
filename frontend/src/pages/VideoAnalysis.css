@@ -317,3 +317,42 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.data-source-note {
+  font-size: 12px;
+  color: #6b8299;
+  background: #f5faff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  display: inline-block;
+}
+
+.segment-summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.segment-box {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+  text-align: center;
+}
+
+.segment-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  color: #1c7bb0;
+}
+
+.segment-name-label {
+  font-size: 11px;
+  color: #6b8299;
+  font-weight: 600;
+  text-transform: uppercase;
+}

@@ -29,7 +29,8 @@ function VideoAnalysis() {
       const response = await api.post('/analyze-video-full?clear_previous_data=true', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setResults(response.data);
+      const behaviorRes = await api.get('/behavior-analysis-all');
+      setResults({ ...response.data, shoppers: behaviorRes.data });
     } catch (err) {
       console.error(err);
       alert('Video analysis failed. This may take a minute for longer videos - please wait and try again.');
@@ -163,10 +164,24 @@ function VideoAnalysis() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <h3>3. Consumer Attention Summary</h3>
+                        <h3>3. Consumer Attention Summary</h3>
             <div className="summary-box">
               <p>Total recorded attention time: <strong>{results.total_attention_time_seconds} seconds</strong></p>
               <p>Total attentive events: <strong>{results.total_attentive_events}</strong></p>
+            </div>
+
+            <h3>Shopper Segment Breakdown</h3>
+            <p className="data-source-note">📊 Based on {results.shoppers ? results.shoppers.length : 0} shoppers tracked from this video.</p>
+            <div className="segment-summary-row">
+              {['Explorer', 'Quick Buyer', 'Comparison Shopper', 'Impulse Buyer', 'Brand Loyal Customer'].map((seg) => {
+                const count = results.shoppers ? results.shoppers.filter(s => s.segment === seg).length : 0;
+                return (
+                  <div key={seg} className="segment-box">
+                    <span className="segment-value">{count}</span>
+                    <span className="segment-name-label">{seg}</span>
+                  </div>
+                );
+              })}
             </div>
 
             <h3>4. Conversion Report</h3>

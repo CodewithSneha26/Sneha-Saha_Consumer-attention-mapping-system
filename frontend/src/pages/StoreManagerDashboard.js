@@ -11,7 +11,7 @@ function StoreManagerDashboard() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [shoppers, setShoppers] = useState([]);
+  
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -20,16 +20,14 @@ function StoreManagerDashboard() {
       return;
     }
 
-    Promise.all([
+      Promise.all([
       getCurrentUser(),
       api.get('/shelf-scores'),
       api.get('/alerts'),
-      api.get('/behavior-analysis-all'),
-    ]).then(([userData, scoresRes, alertsRes, behaviorRes]) => {
+    ]).then(([userData, scoresRes, alertsRes]) => {
       setUser(userData);
       setScores(scoresRes.data);
       setAlerts(alertsRes.data);
-      setShoppers(behaviorRes.data);
       setLoading(false);
     }).catch((err) => {
       console.error(err);
@@ -67,19 +65,6 @@ function StoreManagerDashboard() {
                 <span className="stat-label">Critical Alerts</span>
                 <span className="stat-value alert-number">{criticalAlerts}</span>
               </div>
-            </div>
-
-            <h3>Shopper Segment Breakdown</h3>
-            <div className="stats-row">
-              {['Explorer', 'Quick Buyer', 'Comparison Shopper', 'Impulse Buyer', 'Brand Loyal Customer'].map((seg) => {
-                const count = shoppers.filter(s => s.segment === seg).length;
-                return (
-                  <div key={seg} className="stat-box">
-                    <span className="stat-label">{seg}</span>
-                    <span className="stat-value">{count}</span>
-                  </div>
-                );
-              })}
             </div>
             <h3>Shelf Performance Reports</h3>
             <div className="report-table">
