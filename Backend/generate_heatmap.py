@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')  # Use non-GUI backend - prevents tkinter errors in server context
 from database import SessionLocal
 import models
 import matplotlib.pyplot as plt
