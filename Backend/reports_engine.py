@@ -41,21 +41,43 @@ def generate_pdf_report():
     elements.append(Paragraph("Consumer Attention Mapping System - Full Report", styles['Title']))
     elements.append(Spacer(1, 20))
     
-    # Embed heatmap images
+    # Embed heatmap images in a 2x2 grid
     from reportlab.platypus import Image as RLImage
     heatmap_files = [
-        ("heatmap_1_store.png", "Store Presence Heatmap"),
+        ("heatmap_1_store.png", "Store Presence"),
         ("heatmap_2_shelves.png", "Shelf Dwell Time"),
-        ("heatmap_3_product_attention.png", "Product Attention Matrix"),
-        ("heatmap_4_traffic.png", "Customer Traffic Heatmap"),
+        ("heatmap_3_product_attention.png", "Product Attention"),
+        ("heatmap_4_traffic.png", "Customer Traffic"),
     ]
     elements.append(Paragraph("Attention Heatmaps", styles['Heading2']))
+
+    heatmap_cells = []
     for filename, title in heatmap_files:
         if os.path.exists(filename):
-            elements.append(Paragraph(title, styles['Heading3']))
-            elements.append(RLImage(filename, width=400, height=280))
-            elements.append(Spacer(1, 14))
-    elements.append(Spacer(1, 10))
+            cell_content = [
+                Paragraph(title, styles['Heading4']),
+                RLImage(filename, width=230, height=160)
+            ]
+            heatmap_cells.append(cell_content)
+        else:
+            heatmap_cells.append([Paragraph(f"{title} (not available)", styles['Normal'])])
+
+    # Arrange as 2x2 grid table
+    if len(heatmap_cells) == 4:
+        grid_data = [
+            [heatmap_cells[0], heatmap_cells[1]],
+            [heatmap_cells[2], heatmap_cells[3]],
+        ]
+        heatmap_grid_table = Table(grid_data, colWidths=[250, 250])
+        heatmap_grid_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+        ]))
+        elements.append(heatmap_grid_table)
+    elements.append(Spacer(1, 16))
 
     # Section 1: Shelf Performance & Scoring
     elements.append(Paragraph("Shelf Performance & Attractiveness Scores", styles['Heading2']))
@@ -130,6 +152,34 @@ def generate_pdf_report():
 
     # Section 5: Marketing Effectiveness Report
     elements.append(Paragraph("Marketing Effectiveness Report", styles['Heading2']))
+        # Section: Shopper Segment Breakdown
+    from behavior_analysis import classify_shopper
+    db_seg = SessionLocal()
+    all_ids = db_seg.query(models.AttentionRecord.person_track_id).distinct().all()
+    person_ids = [row[0] for row in all_ids]
+    segment_counts = {}
+    for pid in person_ids:
+        result = classify_shopper(pid, db_seg)
+        if isinstance(result, dict):
+            segment_counts[result["segment"]] = segment_counts.get(result["segment"], 0) + 1
+    db_seg.close()
+
+    elements.append(Paragraph("Shopper Segment Breakdown", styles['Heading2']))
+    segment_data = [["Shopper Segment", "Count"]]
+    for seg, count in segment_counts.items():
+        segment_data.append([seg, str(count)])
+    if len(segment_data) > 1:
+        segment_table = Table(segment_data, hAlign='LEFT')
+        segment_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(segment_table)
+    else:
+        elements.append(Paragraph("No shopper segment data available yet.", styles['Normal']))
+    elements.append(Spacer(1, 20))
     marketing_data = [["Shelf", "Compared Count", "Purchased Count", "Marketing Effectiveness (%)"]]
     for shelf, d in data["scores"].items():
         marketing_data.append([
