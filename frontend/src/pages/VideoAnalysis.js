@@ -93,15 +93,6 @@ function VideoAnalysis() {
                 <span className="overview-label">Attentive Events</span>
               </div>
             </div>
-
-            <h3>Attention Heatmap</h3>
-            <div className="video-heatmap-card">
-              <img
-                src={`http://127.0.0.1:8000/heatmaps/heatmap_1_store.png?t=${Date.now()}`}
-                alt="Store heatmap for this video"
-              />
-              <p className="heatmap-caption">Shows where shoppers spent the most time during this video, based on tracked positions.</p>
-            </div>
             <div className="download-row">
               <button onClick={() => downloadFile(results.pdf_report_url, 'video_analysis_report.pdf')}>
                 Download PDF Report
@@ -223,6 +214,13 @@ function VideoAnalysis() {
               </tbody>
             </table>
 
+            <h3>Attention Heatmaps for This Video</h3>
+            <div className="video-heatmaps-grid">
+              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_1_store.png?t=${Date.now()}`} alt="Store heatmap" />
+              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_2_shelves.png?t=${Date.now()}`} alt="Shelf heatmap" />
+              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_3_product_attention.png?t=${Date.now()}`} alt="Product attention heatmap" />
+              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_4_traffic.png?t=${Date.now()}`} alt="Traffic heatmap" />
+            </div>
             <h3>Recommendations</h3>
             <div className="rec-visual-grid">
               {results.recommendations.map((rec, i) => (
