@@ -228,34 +228,6 @@ def generate_excel_report():
     for shelf, d in data["scores"].items():
         ws4.append([shelf, d["total_interactions"], d["purchased_count"], d["conversion_potential_score"]])
 
-    # Section: Shopper Segment Breakdown
-    from behavior_analysis import classify_shopper
-    db_seg = SessionLocal()
-    all_ids = db_seg.query(models.AttentionRecord.person_track_id).distinct().all()
-    person_ids = [row[0] for row in all_ids]
-    segment_counts = {}
-    for pid in person_ids:
-        result = classify_shopper(pid, db_seg)
-        if isinstance(result, dict):
-            segment_counts[result["segment"]] = segment_counts.get(result["segment"], 0) + 1
-    db_seg.close()
-
-    elements.append(Paragraph("Shopper Segment Breakdown", styles['Heading2']))
-    segment_data = [["Shopper Segment", "Count"]]
-    for seg, count in segment_counts.items():
-        segment_data.append([seg, str(count)])
-    if len(segment_data) > 1:
-        segment_table = Table(segment_data, hAlign='LEFT')
-        segment_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ]))
-        elements.append(segment_table)
-    else:
-        elements.append(Paragraph("No shopper segment data available yet.", styles['Normal']))
-    elements.append(Spacer(1, 20))
     # Sheet 5: Marketing Effectiveness Report
     ws5 = wb.create_sheet("Marketing Effectiveness")
     ws5.append(["Shelf", "Compared Count", "Purchased Count", "Marketing Effectiveness (%)"])
