@@ -2,7 +2,7 @@ from database import SessionLocal
 import models
 from scoring_engine import calculate_shelf_scores
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 import openpyxl
@@ -29,8 +29,26 @@ def gather_report_data():
     }
 
 
+def get_shopper_segment_counts():
+    """Runs behavior classification for every tracked person and returns segment counts."""
+    from behavior_analysis import classify_shopper
+    db = SessionLocal()
+    all_ids = db.query(models.AttentionRecord.person_track_id).distinct().all()
+    person_ids = [row[0] for row in all_ids]
+
+    segment_counts = {}
+    for pid in person_ids:
+        result = classify_shopper(pid, db)
+        if isinstance(result, dict):
+            segment_counts[result["segment"]] = segment_counts.get(result["segment"], 0) + 1
+
+    db.close()
+    return segment_counts
+
+
 def generate_pdf_report():
-    """Generates a consolidated PDF report - attention, engagement, shelf performance, conversion, marketing"""
+    """Generates a consolidated PDF report - heatmaps, shelf performance, engagement, attention,
+    shopper segments, conversion, marketing"""
     data = gather_report_data()
     filepath = os.path.join(REPORTS_FOLDER, "consumer_attention_report.pdf")
 
@@ -40,9 +58,8 @@ def generate_pdf_report():
 
     elements.append(Paragraph("Consumer Attention Mapping System - Full Report", styles['Title']))
     elements.append(Spacer(1, 20))
-    
+
     # Embed heatmap images in a 2x2 grid
-    from reportlab.platypus import Image as RLImage
     heatmap_files = [
         ("heatmap_1_store.png", "Store Presence"),
         ("heatmap_2_shelves.png", "Shelf Dwell Time"),
@@ -62,7 +79,6 @@ def generate_pdf_report():
         else:
             heatmap_cells.append([Paragraph(f"{title} (not available)", styles['Normal'])])
 
-    # Arrange as 2x2 grid table
     if len(heatmap_cells) == 4:
         grid_data = [
             [heatmap_cells[0], heatmap_cells[1]],
@@ -130,6 +146,26 @@ def generate_pdf_report():
     elements.append(Paragraph(f"Total attentive events: {attentive_count}", styles['Normal']))
     elements.append(Spacer(1, 20))
 
+    # Section: Shopper Segment Breakdown (PDF only - uses 'elements', not Excel worksheets)
+    segment_counts = get_shopper_segment_counts()
+    elements.append(Paragraph("Shopper Segment Breakdown", styles['Heading2']))
+    segment_data = [["Shopper Segment", "Count"]]
+    for seg, count in segment_counts.items():
+        segment_data.append([seg, str(count)])
+
+    if len(segment_data) > 1:
+        segment_table = Table(segment_data, hAlign='LEFT')
+        segment_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(segment_table)
+    else:
+        elements.append(Paragraph("No shopper segment data available yet.", styles['Normal']))
+    elements.append(Spacer(1, 20))
+
     # Section 4: Conversion Report
     elements.append(Paragraph("Conversion Report", styles['Heading2']))
     conversion_data = [["Shelf", "Total Interactions", "Purchased", "Conversion Rate (%)"]]
@@ -171,6 +207,7 @@ def generate_pdf_report():
 
     doc.build(elements)
     return filepath
+
 
 def generate_excel_report():
     """Generates an Excel report with multiple sheets"""
@@ -226,7 +263,12 @@ def generate_excel_report():
         cell.fill = PatternFill(start_color="333333", end_color="333333", fill_type="solid")
 
     for shelf, d in data["scores"].items():
-        ws4.append([shelf, d["total_interactions"], d["purchased_count"], d["conversion_potential_score"]])
+        ws4.append([
+            shelf,
+            d["total_interactions"],
+            d["purchased_count"],
+            d["conversion_potential_score"]
+        ])
 
     # Sheet 5: Marketing Effectiveness Report
     ws5 = wb.create_sheet("Marketing Effectiveness")
@@ -236,7 +278,23 @@ def generate_excel_report():
         cell.fill = PatternFill(start_color="333333", end_color="333333", fill_type="solid")
 
     for shelf, d in data["scores"].items():
-        ws5.append([shelf, d["compared_count"], d["purchased_count"], d["marketing_effectiveness_score"]])
+        ws5.append([
+            shelf,
+            d["compared_count"],
+            d["purchased_count"],
+            d["marketing_effectiveness_score"]
+        ])
+
+    # Sheet 6: Shopper Segment Breakdown (Excel version - uses worksheet, not 'elements')
+    ws6 = wb.create_sheet("Shopper Segments")
+    ws6.append(["Shopper Segment", "Count"])
+    for cell in ws6[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="333333", end_color="333333", fill_type="solid")
+
+    segment_counts = get_shopper_segment_counts()
+    for seg, count in segment_counts.items():
+        ws6.append([seg, count])
 
     wb.save(filepath)
     return filepath
