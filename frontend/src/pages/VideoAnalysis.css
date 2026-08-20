@@ -356,3 +356,78 @@
   font-weight: 600;
   text-transform: uppercase;
 }
+
+
+.behavior-intel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.intel-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
+}
+
+.intel-icon {
+  font-size: 22px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.intel-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #14324d;
+  margin-bottom: 2px;
+}
+
+.intel-subtitle {
+  font-size: 11px;
+  color: #a9bccf;
+  margin-bottom: 12px;
+}
+
+.intel-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-top: 1px solid #eef2f6;
+  font-size: 12px;
+  color: #3a5568;
+}
+
+.intel-row:first-of-type {
+  border-top: none;
+}
+
+.intel-row strong {
+  color: #1c7bb0;
+}
+
+.journey-mini-path {
+  font-size: 11px;
+  color: #3a5568;
+  padding: 6px 0;
+  border-top: 1px solid #eef2f6;
+  line-height: 1.4;
+}
+
+.journey-mini-path:first-of-type {
+  border-top: none;
+}
+
+.journey-mini-id {
+  font-weight: 700;
+  color: #14324d;
+  margin-right: 6px;
+}
+
+@media (max-width: 700px) {
+  .behavior-intel-grid {
+    grid-template-columns: 1fr;
+  }
+}

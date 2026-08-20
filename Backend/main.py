@@ -614,6 +614,57 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
     generate_heatmap.generate_shelf_heatmaps()
     generate_heatmap.generate_product_attention_heatmap()
 
+        # Consumer Behavior Intelligence: gather deeper insights
+    db5 = SessionLocal()
+    all_ids = db5.query(models.AttentionRecord.person_track_id).distinct().all()
+    person_ids = [row[0] for row in all_ids]
+
+    shopper_details = []
+    for pid in person_ids:
+        result = behavior_analysis.classify_shopper(pid, db5)
+        if isinstance(result, dict):
+            journey = db5.query(models.JourneyLog).filter(
+                models.JourneyLog.person_track_id == pid
+            ).order_by(models.JourneyLog.sequence_number).all()
+            result["journey_path"] = [j.zone for j in journey]
+            shopper_details.append(result)
+    db5.close()
+
+    # 1. Movement Behavior: avg zones visited per segment
+    movement_by_segment = {}
+    for s in shopper_details:
+        seg = s["segment"]
+        movement_by_segment.setdefault(seg, []).append(len(s["zones_visited"]))
+    movement_analysis = {
+        seg: round(sum(vals) / len(vals), 1) for seg, vals in movement_by_segment.items()
+    }
+
+    # 2. Product Preference: which shelf each segment spends most time at
+    preference_by_segment = {}
+    for s in shopper_details:
+        seg = s["segment"]
+        for zone in s["zones_visited"]:
+            preference_by_segment.setdefault(seg, {})
+            preference_by_segment[seg][zone] = preference_by_segment[seg].get(zone, 0) + 1
+    top_preference_by_segment = {
+        seg: max(shelves, key=shelves.get) for seg, shelves in preference_by_segment.items() if shelves
+    }
+
+    # 3. Journey Paths: sample of actual paths taken
+    sample_journeys = [
+        {"person_track_id": s["person_track_id"], "path": s["journey_path"]}
+        for s in shopper_details if s["journey_path"]
+    ][:6]
+
+    # 4. Shopping Pattern: avg dwell time per segment
+    pattern_by_segment = {}
+    for s in shopper_details:
+        seg = s["segment"]
+        pattern_by_segment.setdefault(seg, []).append(s["total_time_seconds"])
+    shopping_pattern = {
+        seg: round(sum(vals) / len(vals), 1) for seg, vals in pattern_by_segment.items()
+    }
+
     return {
         "filename": file.filename,
         "frames_processed": frame_num,
@@ -623,6 +674,10 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         "interaction_summary": interaction_counts,
         "total_attention_time_seconds": total_attention_time,
         "total_attentive_events": attentive_count,
+        "movement_analysis": movement_analysis,
+        "top_preference_by_segment": top_preference_by_segment,
+        "sample_journeys": sample_journeys,
+        "shopping_pattern": shopping_pattern,
         "pdf_report_url": "/reports/pdf",
         "excel_report_url": "/reports/excel"
     }

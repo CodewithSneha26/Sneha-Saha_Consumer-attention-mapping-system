@@ -184,6 +184,53 @@ function VideoAnalysis() {
               })}
             </div>
 
+            <h3>Consumer Behavior Intelligence</h3>
+            <div className="behavior-intel-grid">
+              <div className="intel-card">
+                <span className="intel-icon">🚶</span>
+                <h4>Movement Behavior</h4>
+                <p className="intel-subtitle">Average zones visited per shopper type</p>
+                {Object.entries(results.movement_analysis || {}).map(([seg, avg]) => (
+                  <div key={seg} className="intel-row">
+                    <span>{seg}</span><strong>{avg} zones</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div className="intel-card">
+                <span className="intel-icon">🛍️</span>
+                <h4>Product Preference</h4>
+                <p className="intel-subtitle">Most-visited shelf per shopper type</p>
+                {Object.entries(results.top_preference_by_segment || {}).map(([seg, shelf]) => (
+                  <div key={seg} className="intel-row">
+                    <span>{seg}</span><strong>{shelf}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div className="intel-card">
+                <span className="intel-icon">🗺️</span>
+                <h4>Journey Paths</h4>
+                <p className="intel-subtitle">Actual routes taken through the store</p>
+                {(results.sample_journeys || []).map((j, i) => (
+                  <div key={i} className="journey-mini-path">
+                    <span className="journey-mini-id">#{j.person_track_id}</span>
+                    {j.path.join(' → ')}
+                  </div>
+                ))}
+              </div>
+
+              <div className="intel-card">
+                <span className="intel-icon">⏱️</span>
+                <h4>Shopping Patterns</h4>
+                <p className="intel-subtitle">Average total time spent, per shopper type</p>
+                {Object.entries(results.shopping_pattern || {}).map(([seg, avg]) => (
+                  <div key={seg} className="intel-row">
+                    <span>{seg}</span><strong>{avg}s</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
             <h3>4. Conversion Report</h3>
             <div className="conversion-chart-card">
               <ResponsiveContainer width="100%" height={Object.keys(results.shelf_scores).length * 70}>
