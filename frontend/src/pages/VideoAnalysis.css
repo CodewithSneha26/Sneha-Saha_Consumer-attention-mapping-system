@@ -387,7 +387,7 @@
 
 .intel-subtitle {
   font-size: 11px;
-  color: #a9bccf;
+  color: #000000;
   margin-bottom: 12px;
 }
 
@@ -453,7 +453,7 @@
 
 .journey-arrow-mini {
   font-size: 11px;
-  color: #a9bccf;
+  color: #6b8299;
 }
 
 
@@ -473,11 +473,10 @@
 .route-rank {
   font-size: 11px;
   font-weight: 700;
-  color: #a9bccf;
+  color: #3a5568;
   min-width: 20px;
   flex-shrink: 0;
 }
-
 .route-path {
   display: flex;
   align-items: center;
@@ -504,4 +503,18 @@
   border-radius: 10px;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.route-section-title {
+  color: #14324d;
+  font-weight: 700;
+}
+/* Make Most Frequent and Least Frequent headings black */
+.route-section-title,
+.route-section-heading,
+.route-section-title *,
+.route-section-heading * {
+    color: #000000 !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
