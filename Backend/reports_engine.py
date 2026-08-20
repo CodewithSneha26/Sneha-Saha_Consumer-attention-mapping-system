@@ -46,6 +46,37 @@ def get_shopper_segment_counts():
     return segment_counts
 
 
+def get_behavior_intelligence_data():
+    """Gathers movement, preference, journey, and pattern data for PDF report."""
+    from behavior_analysis import classify_shopper
+    db = SessionLocal()
+    all_ids = db.query(models.AttentionRecord.person_track_id).distinct().all()
+    person_ids = [row[0] for row in all_ids]
+
+    shopper_details = []
+    for pid in person_ids:
+        result = classify_shopper(pid, db)
+        if isinstance(result, dict):
+            journey = db.query(models.JourneyLog).filter(
+                models.JourneyLog.person_track_id == pid
+            ).order_by(models.JourneyLog.sequence_number).all()
+            result["journey_path"] = [j.zone for j in journey]
+            shopper_details.append(result)
+    db.close()
+
+    movement_by_segment = {}
+    for s in shopper_details:
+        movement_by_segment.setdefault(s["segment"], []).append(len(s["zones_visited"]))
+    movement = {seg: round(sum(v) / len(v), 1) for seg, v in movement_by_segment.items()}
+
+    pattern_by_segment = {}
+    for s in shopper_details:
+        pattern_by_segment.setdefault(s["segment"], []).append(s["total_time_seconds"])
+    pattern = {seg: round(sum(v) / len(v), 1) for seg, v in pattern_by_segment.items()}
+
+    return movement, pattern
+
+
 def generate_pdf_report():
     """Generates a consolidated PDF report - heatmaps, shelf performance, engagement, attention,
     shopper segments, conversion, marketing"""
@@ -168,6 +199,39 @@ def generate_pdf_report():
 
     # Section 4: Conversion Report
     elements.append(Paragraph("Conversion Report", styles['Heading2']))
+    # Section: Consumer Behavior Intelligence
+    movement, pattern = get_behavior_intelligence_data()
+    elements.append(Paragraph("Consumer Behavior Intelligence", styles['Heading2']))
+
+    elements.append(Paragraph("Average Zones Visited per Shopper Type", styles['Heading4']))
+    movement_data = [["Shopper Type", "Avg. Zones Visited"]]
+    for seg, avg in movement.items():
+        movement_data.append([seg, str(avg)])
+    if len(movement_data) > 1:
+        mt = Table(movement_data, hAlign='LEFT')
+        mt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(mt)
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph("Average Time Spent per Shopper Type", styles['Heading4']))
+    pattern_data = [["Shopper Type", "Avg. Time (seconds)"]]
+    for seg, avg in pattern.items():
+        pattern_data.append([seg, str(avg)])
+    if len(pattern_data) > 1:
+        pt = Table(pattern_data, hAlign='LEFT')
+        pt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(pt)
+    elements.append(Spacer(1, 20))
     conversion_data = [["Shelf", "Total Interactions", "Purchased", "Conversion Rate (%)"]]
     for shelf, d in data["scores"].items():
         conversion_data.append([
