@@ -455,3 +455,22 @@
   font-size: 11px;
   color: #a9bccf;
 }
+
+.route-section-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8b9cb0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 10px 0 4px;
+}
+
+.chip-faded {
+  opacity: 0.6;
+}
+
+.route-count-low {
+  background: #fdf1e4;
+  color: #d4842a;
+}

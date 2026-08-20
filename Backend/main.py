@@ -636,7 +636,7 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         seg = s["segment"]
         movement_by_segment.setdefault(seg, []).append(len(s["zones_visited"]))
     movement_analysis = {
-        seg: round(sum(vals) / len(vals), 1) for seg, vals in movement_by_segment.items()
+        seg: round(sum(vals) / len(vals)) for seg, vals in movement_by_segment.items()  # whole numbers only, clearer for reading
     }
 
     # 2. Product Preference: which shelf each segment spends most time at
@@ -650,12 +650,23 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         seg: max(shelves, key=shelves.get) for seg, shelves in preference_by_segment.items() if shelves
     }
 
-     # 3. Journey Paths: sample of actual paths taken
-    sample_journeys = [
-        {"person_track_id": s["person_track_id"], "path": s["journey_path"][:6]}  # cap at 6 steps for readability
-        for s in shopper_details if s["journey_path"]
-    ][:4]  # show max 4 people
+    # 3. Common Transitions: aggregate most frequent shelf-to-shelf movements (cleaner than raw individual paths)
+    transition_counts = {}
+    for s in shopper_details:
+        path = s["journey_path"]
+        for i in range(len(path) - 1):
+            transition = (path[i], path[i + 1])
+            transition_counts[transition] = transition_counts.get(transition, 0) + 1
 
+    sorted_transitions = sorted(transition_counts.items(), key=lambda x: x[1], reverse=True)
+    most_frequent_routes = [
+        {"from": t[0][0], "to": t[0][1], "count": t[1]}
+        for t in sorted_transitions[:5]
+    ]
+    least_frequent_routes = [
+        {"from": t[0][0], "to": t[0][1], "count": t[1]}
+        for t in sorted_transitions[-5:]
+    ] if len(sorted_transitions) > 5 else []
     # 4. Shopping Pattern: avg dwell time per segment
     pattern_by_segment = {}
     for s in shopper_details:
@@ -676,7 +687,9 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         "total_attentive_events": attentive_count,
         "movement_analysis": movement_analysis,
         "top_preference_by_segment": top_preference_by_segment,
-        "sample_journeys": sample_journeys,
+        "most_frequent_routes": most_frequent_routes,
+        "least_frequent_routes": least_frequent_routes,
+        "total_unique_routes": len(transition_counts),
         "shopping_pattern": shopping_pattern,
         "pdf_report_url": "/reports/pdf",
         "excel_report_url": "/reports/excel"

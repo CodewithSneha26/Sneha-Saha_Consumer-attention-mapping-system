@@ -216,21 +216,43 @@ function VideoAnalysis() {
 
               <div className="intel-card">
                 <span className="intel-icon">🗺️</span>
-                <h4>Journey Paths</h4>
-                <p className="intel-subtitle">Actual routes taken through the store</p>
-                {(results.sample_journeys || []).map((j, i) => (
-                  <div key={i} className="journey-mini-block">
-                    <span className="journey-mini-id">Shopper #{j.person_track_id}</span>
-                    <div className="journey-mini-chips">
-                      {j.path.map((step, idx) => (
-                        <React.Fragment key={idx}>
-                          <span className="journey-chip">{step.length > 14 ? step.substring(0, 14) + '…' : step}</span>
-                          {idx < j.path.length - 1 && <span className="journey-arrow-mini">→</span>}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                <h4>Store Route Patterns</h4>
+                <p className="intel-subtitle">{results.total_unique_routes || 0} unique shelf-to-shelf routes observed</p>
+
+                {(!results.most_frequent_routes || results.most_frequent_routes.length === 0) ? (
+                  <p className="intel-empty">Not enough shelf-to-shelf movement yet — try a longer video with more zone changes.</p>
+                ) : (
+                  <>
+                    <span className="route-section-label">Most Frequent</span>
+                    {results.most_frequent_routes.map((r, i) => (
+                      <div key={`most-${i}`} className="route-row">
+                        <span className="route-rank">#{i + 1}</span>
+                        <div className="route-path">
+                          <span className="journey-chip">{r.from.length > 14 ? r.from.substring(0, 14) + '…' : r.from}</span>
+                          <span className="journey-arrow-mini">→</span>
+                          <span className="journey-chip">{r.to.length > 14 ? r.to.substring(0, 14) + '…' : r.to}</span>
+                        </div>
+                        <span className="route-count">{r.count}×</span>
+                      </div>
+                    ))}
+
+                    {results.least_frequent_routes && results.least_frequent_routes.length > 0 && (
+                      <>
+                        <span className="route-section-label">Least Frequent</span>
+                        {results.least_frequent_routes.map((r, i) => (
+                          <div key={`least-${i}`} className="route-row">
+                            <div className="route-path">
+                              <span className="journey-chip chip-faded">{r.from.length > 14 ? r.from.substring(0, 14) + '…' : r.from}</span>
+                              <span className="journey-arrow-mini">→</span>
+                              <span className="journey-chip chip-faded">{r.to.length > 14 ? r.to.substring(0, 14) + '…' : r.to}</span>
+                            </div>
+                            <span className="route-count route-count-low">{r.count}×</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="intel-card">

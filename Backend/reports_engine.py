@@ -67,7 +67,7 @@ def get_behavior_intelligence_data():
     movement_by_segment = {}
     for s in shopper_details:
         movement_by_segment.setdefault(s["segment"], []).append(len(s["zones_visited"]))
-    movement = {seg: round(sum(v) / len(v), 1) for seg, v in movement_by_segment.items()}
+    movement = {seg: round(sum(v) / len(v)) for seg, v in movement_by_segment.items()}
 
     pattern_by_segment = {}
     for s in shopper_details:
