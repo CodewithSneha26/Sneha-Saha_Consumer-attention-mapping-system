@@ -219,9 +219,16 @@ function VideoAnalysis() {
                 <h4>Journey Paths</h4>
                 <p className="intel-subtitle">Actual routes taken through the store</p>
                 {(results.sample_journeys || []).map((j, i) => (
-                  <div key={i} className="journey-mini-path">
-                    <span className="journey-mini-id">#{j.person_track_id}</span>
-                    {j.path.join(' → ')}
+                  <div key={i} className="journey-mini-block">
+                    <span className="journey-mini-id">Shopper #{j.person_track_id}</span>
+                    <div className="journey-mini-chips">
+                      {j.path.map((step, idx) => (
+                        <React.Fragment key={idx}>
+                          <span className="journey-chip">{step.length > 14 ? step.substring(0, 14) + '…' : step}</span>
+                          {idx < j.path.length - 1 && <span className="journey-arrow-mini">→</span>}
+                        </React.Fragment>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
