@@ -655,18 +655,21 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
     for s in shopper_details:
         path = s["journey_path"]
         for i in range(len(path) - 1):
+            # Skip self-loops - only count genuine movement between DIFFERENT shelves
+            if path[i] == path[i + 1]:
+                continue
             transition = (path[i], path[i + 1])
             transition_counts[transition] = transition_counts.get(transition, 0) + 1
 
     sorted_transitions = sorted(transition_counts.items(), key=lambda x: x[1], reverse=True)
     most_frequent_routes = [
         {"from": t[0][0], "to": t[0][1], "count": t[1]}
-        for t in sorted_transitions[:5]
+        for t in sorted_transitions[:3]
     ]
     least_frequent_routes = [
         {"from": t[0][0], "to": t[0][1], "count": t[1]}
-        for t in sorted_transitions[-5:]
-    ] if len(sorted_transitions) > 5 else []
+        for t in sorted_transitions[-3:]
+    ] if len(sorted_transitions) > 6 else []
     # 4. Shopping Pattern: avg dwell time per segment
     pattern_by_segment = {}
     for s in shopper_details:

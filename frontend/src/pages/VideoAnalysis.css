@@ -456,21 +456,52 @@
   color: #a9bccf;
 }
 
-.route-section-label {
-  display: block;
-  font-size: 10px;
+
+.route-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid #eef2f6;
+  flex-wrap: nowrap;
+}
+
+.route-row:first-of-type {
+  border-top: none;
+}
+
+.route-rank {
+  font-size: 11px;
   font-weight: 700;
-  color: #8b9cb0;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 10px 0 4px;
+  color: #a9bccf;
+  min-width: 20px;
+  flex-shrink: 0;
 }
 
-.chip-faded {
-  opacity: 0.6;
+.route-path {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
-.route-count-low {
-  background: #fdf1e4;
-  color: #d4842a;
+.route-path .journey-chip {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.route-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1c7bb0;
+  background: #eaf6ff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }

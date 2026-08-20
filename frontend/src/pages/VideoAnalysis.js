@@ -258,7 +258,7 @@ function VideoAnalysis() {
               <div className="intel-card">
                 <span className="intel-icon">⏱️</span>
                 <h4>Shopping Patterns</h4>
-                <p className="intel-subtitle">Average total time spent, per shopper type</p>
+                <p className="intel-subtitle">Average dwell time per zone visit, per shopper type</p>
                 {Object.entries(results.shopping_pattern || {}).map(([seg, avg]) => (
                   <div key={seg} className="intel-row">
                     <span>{seg}</span><strong>{avg}s</strong>
