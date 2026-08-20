@@ -199,7 +199,25 @@ def generate_pdf_report():
 
     # Section 4: Conversion Report
     elements.append(Paragraph("Conversion Report", styles['Heading2']))
-    # Section: Consumer Behavior Intelligence
+    conversion_data = [["Shelf", "Total Interactions", "Purchased", "Conversion Rate (%)"]]
+    for shelf, d in data["scores"].items():
+        conversion_data.append([
+            shelf,
+            str(d["total_interactions"]),
+            str(d["purchased_count"]),
+            str(d["conversion_potential_score"])
+        ])
+    conversion_table = Table(conversion_data, hAlign='LEFT')
+    conversion_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(conversion_table)
+    elements.append(Spacer(1, 20))
+
+     # Section: Consumer Behavior Intelligence
     movement, pattern = get_behavior_intelligence_data()
     elements.append(Paragraph("Consumer Behavior Intelligence", styles['Heading2']))
 
@@ -231,23 +249,6 @@ def generate_pdf_report():
             ('FONTSIZE', (0, 0), (-1, -1), 8),
         ]))
         elements.append(pt)
-    elements.append(Spacer(1, 20))
-    conversion_data = [["Shelf", "Total Interactions", "Purchased", "Conversion Rate (%)"]]
-    for shelf, d in data["scores"].items():
-        conversion_data.append([
-            shelf,
-            str(d["total_interactions"]),
-            str(d["purchased_count"]),
-            str(d["conversion_potential_score"])
-        ])
-    conversion_table = Table(conversion_data, hAlign='LEFT')
-    conversion_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-    ]))
-    elements.append(conversion_table)
     elements.append(Spacer(1, 20))
 
     # Section 5: Marketing Effectiveness Report
