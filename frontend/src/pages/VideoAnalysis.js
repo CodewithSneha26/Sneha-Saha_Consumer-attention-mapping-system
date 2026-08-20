@@ -25,12 +25,18 @@ function VideoAnalysis() {
     const formData = new FormData();
     formData.append('file', selectedFile);
 
-    try {
+        try {
       const response = await api.post('/analyze-video-full?clear_previous_data=true', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const behaviorRes = await api.get('/behavior-analysis-all');
-      setResults({ ...response.data, shoppers: behaviorRes.data });
+      let behaviorData = [];
+      try {
+        const behaviorRes = await api.get('/behavior-analysis-all');
+        behaviorData = behaviorRes.data;
+      } catch (bErr) {
+        console.error('Behavior analysis fetch failed:', bErr);
+      }
+      setResults({ ...response.data, shoppers: behaviorData });
     } catch (err) {
       console.error(err);
       alert('Video analysis failed. This may take a minute for longer videos - please wait and try again.');

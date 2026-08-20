@@ -408,6 +408,7 @@
   color: #1c7bb0;
 }
 
+
 .journey-mini-path {
   font-size: 11px;
   color: #3a5568;
@@ -416,18 +417,41 @@
   line-height: 1.4;
 }
 
-.journey-mini-path:first-of-type {
+
+.journey-mini-block {
+  padding: 8px 0;
+  border-top: 1px solid #eef2f6;
+}
+
+.journey-mini-block:first-of-type {
   border-top: none;
 }
 
 .journey-mini-id {
+  display: block;
+  font-size: 11px;
   font-weight: 700;
   color: #14324d;
-  margin-right: 6px;
+  margin-bottom: 6px;
 }
 
-@media (max-width: 700px) {
-  .behavior-intel-grid {
-    grid-template-columns: 1fr;
-  }
+.journey-mini-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.journey-chip {
+  font-size: 10px;
+  background: #eaf6ff;
+  color: #1c7bb0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.journey-arrow-mini {
+  font-size: 11px;
+  color: #a9bccf;
 }

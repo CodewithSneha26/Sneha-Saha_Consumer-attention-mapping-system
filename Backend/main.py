@@ -541,7 +541,7 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
                         duration = (frame_num - prev["frame_start"]) / fps
 
                         # Skip unrealistically short events - these are tracking noise, not real behavior
-                        if duration < 0.5:
+                        if duration < 0.2:
                             person_state[track_id] = {"zone": zone, "attention": attention_status, "frame_start": frame_num}
                             continue
 
@@ -650,11 +650,19 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         seg: max(shelves, key=shelves.get) for seg, shelves in preference_by_segment.items() if shelves
     }
 
-    # 3. Journey Paths: sample of actual paths taken
-    sample_journeys = [
-        {"person_track_id": s["person_track_id"], "path": s["journey_path"]}
-        for s in shopper_details if s["journey_path"]
-    ][:6]
+    # 3. Common Transitions: aggregate most frequent shelf-to-shelf movements (cleaner than raw individual paths)
+    transition_counts = {}
+    for s in shopper_details:
+        path = s["journey_path"]
+        for i in range(len(path) - 1):
+            transition = (path[i], path[i + 1])
+            transition_counts[transition] = transition_counts.get(transition, 0) + 1
+
+    top_transitions = sorted(transition_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    common_routes = [
+        {"from": t[0][0], "to": t[0][1], "count": t[1]}
+        for t in top_transitions
+    ]
 
     # 4. Shopping Pattern: avg dwell time per segment
     pattern_by_segment = {}
@@ -676,7 +684,7 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         "total_attentive_events": attentive_count,
         "movement_analysis": movement_analysis,
         "top_preference_by_segment": top_preference_by_segment,
-        "sample_journeys": sample_journeys,
+        "common_routes": common_routes,
         "shopping_pattern": shopping_pattern,
         "pdf_report_url": "/reports/pdf",
         "excel_report_url": "/reports/excel"
