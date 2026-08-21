@@ -47,7 +47,7 @@ def get_shopper_segment_counts():
 
 
 def get_behavior_intelligence_data():
-    """Gathers movement, preference, journey, and pattern data for PDF report."""
+    """Gathers movement, preference, route, and pattern data for PDF report."""
     from behavior_analysis import classify_shopper
     db = SessionLocal()
     all_ids = db.query(models.AttentionRecord.person_track_id).distinct().all()
@@ -74,12 +74,26 @@ def get_behavior_intelligence_data():
         pattern_by_segment.setdefault(s["segment"], []).append(s["total_time_seconds"])
     pattern = {seg: round(sum(v) / len(v), 1) for seg, v in pattern_by_segment.items()}
 
-    return movement, pattern
+    # Store route patterns - excluding self-loops (same shelf to same shelf is not real movement)
+    transition_counts = {}
+    for s in shopper_details:
+        path = s["journey_path"]
+        for i in range(len(path) - 1):
+            if path[i] == path[i + 1]:
+                continue
+            transition = (path[i], path[i + 1])
+            transition_counts[transition] = transition_counts.get(transition, 0) + 1
+
+    sorted_transitions = sorted(transition_counts.items(), key=lambda x: x[1], reverse=True)
+    most_frequent_routes = sorted_transitions[:3]
+    least_frequent_routes = sorted_transitions[-3:] if len(sorted_transitions) > 6 else []
+
+    return movement, pattern, most_frequent_routes, least_frequent_routes
 
 
 def generate_pdf_report():
     """Generates a consolidated PDF report - heatmaps, shelf performance, engagement, attention,
-    shopper segments, conversion, marketing"""
+    shopper segments, behavior intelligence, conversion, marketing"""
     data = gather_report_data()
     filepath = os.path.join(REPORTS_FOLDER, "consumer_attention_report.pdf")
 
@@ -177,7 +191,7 @@ def generate_pdf_report():
     elements.append(Paragraph(f"Total attentive events: {attentive_count}", styles['Normal']))
     elements.append(Spacer(1, 20))
 
-    # Section: Shopper Segment Breakdown (PDF only - uses 'elements', not Excel worksheets)
+    # Section: Shopper Segment Breakdown
     segment_counts = get_shopper_segment_counts()
     elements.append(Paragraph("Shopper Segment Breakdown", styles['Heading2']))
     segment_data = [["Shopper Segment", "Count"]]
@@ -195,6 +209,72 @@ def generate_pdf_report():
         elements.append(segment_table)
     else:
         elements.append(Paragraph("No shopper segment data available yet.", styles['Normal']))
+    elements.append(Spacer(1, 20))
+
+    # Section: Consumer Behavior Intelligence
+    movement, pattern, most_frequent_routes, least_frequent_routes = get_behavior_intelligence_data()
+    elements.append(Paragraph("Consumer Behavior Intelligence", styles['Heading2']))
+
+    elements.append(Paragraph("Average Zones Visited per Shopper Type", styles['Heading4']))
+    movement_data = [["Shopper Type", "Avg. Zones Visited"]]
+    for seg, avg in movement.items():
+        movement_data.append([seg, str(avg)])
+    if len(movement_data) > 1:
+        mt = Table(movement_data, hAlign='LEFT')
+        mt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(mt)
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph("Average Dwell Time per Zone Visit, per Shopper Type", styles['Heading4']))
+    pattern_data = [["Shopper Type", "Avg. Time (seconds)"]]
+    for seg, avg in pattern.items():
+        pattern_data.append([seg, str(avg)])
+    if len(pattern_data) > 1:
+        pt = Table(pattern_data, hAlign='LEFT')
+        pt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(pt)
+    elements.append(Spacer(1, 12))
+
+    elements.append(Paragraph("Most Frequent Store Routes", styles['Heading4']))
+    most_route_data = [["From", "To", "Frequency"]]
+    for (from_z, to_z), count in most_frequent_routes:
+        most_route_data.append([from_z, to_z, str(count)])
+    if len(most_route_data) > 1:
+        mrt = Table(most_route_data, hAlign='LEFT')
+        mrt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(mrt)
+    else:
+        elements.append(Paragraph("Not enough movement data yet.", styles['Normal']))
+    elements.append(Spacer(1, 12))
+
+    if least_frequent_routes:
+        elements.append(Paragraph("Least Frequent Store Routes", styles['Heading4']))
+        least_route_data = [["From", "To", "Frequency"]]
+        for (from_z, to_z), count in least_frequent_routes:
+            least_route_data.append([from_z, to_z, str(count)])
+        lrt = Table(least_route_data, hAlign='LEFT')
+        lrt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(lrt)
     elements.append(Spacer(1, 20))
 
     # Section 4: Conversion Report
@@ -215,40 +295,6 @@ def generate_pdf_report():
         ('FONTSIZE', (0, 0), (-1, -1), 8),
     ]))
     elements.append(conversion_table)
-    elements.append(Spacer(1, 20))
-
-     # Section: Consumer Behavior Intelligence
-    movement, pattern = get_behavior_intelligence_data()
-    elements.append(Paragraph("Consumer Behavior Intelligence", styles['Heading2']))
-
-    elements.append(Paragraph("Average Zones Visited per Shopper Type", styles['Heading4']))
-    movement_data = [["Shopper Type", "Avg. Zones Visited"]]
-    for seg, avg in movement.items():
-        movement_data.append([seg, str(avg)])
-    if len(movement_data) > 1:
-        mt = Table(movement_data, hAlign='LEFT')
-        mt.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ]))
-        elements.append(mt)
-    elements.append(Spacer(1, 12))
-
-    elements.append(Paragraph("Average Time Spent per Shopper Type", styles['Heading4']))
-    pattern_data = [["Shopper Type", "Avg. Time (seconds)"]]
-    for seg, avg in pattern.items():
-        pattern_data.append([seg, str(avg)])
-    if len(pattern_data) > 1:
-        pt = Table(pattern_data, hAlign='LEFT')
-        pt.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#333333")),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ]))
-        elements.append(pt)
     elements.append(Spacer(1, 20))
 
     # Section 5: Marketing Effectiveness Report
@@ -281,7 +327,6 @@ def generate_excel_report():
 
     wb = openpyxl.Workbook()
 
-    # Sheet 1: Shelf Scores
     ws1 = wb.active
     ws1.title = "Shelf Performance"
     headers = ["Shelf", "Attractiveness Score", "Visibility", "Engagement", "Conversion", "Marketing Effectiveness"]
@@ -300,7 +345,6 @@ def generate_excel_report():
             d["marketing_effectiveness_score"]
         ])
 
-    # Sheet 2: Product Interactions
     ws2 = wb.create_sheet("Product Interactions")
     ws2.append(["Person ID", "Shelf", "Interaction Type", "Duration (s)"])
     for cell in ws2[1]:
@@ -310,7 +354,6 @@ def generate_excel_report():
     for i in data["interactions"]:
         ws2.append([i.person_track_id, i.shelf_zone, i.interaction_type, i.duration_seconds])
 
-    # Sheet 3: Attention Records
     ws3 = wb.create_sheet("Attention Records")
     ws3.append(["Person ID", "Zone", "Attention Status", "Duration (s)"])
     for cell in ws3[1]:
@@ -320,7 +363,6 @@ def generate_excel_report():
     for r in data["attention_records"]:
         ws3.append([r.person_track_id, r.zone, r.attention_status, r.duration_seconds])
 
-    # Sheet 4: Conversion Report
     ws4 = wb.create_sheet("Conversion Report")
     ws4.append(["Shelf", "Total Interactions", "Purchased", "Conversion Rate (%)"])
     for cell in ws4[1]:
@@ -335,7 +377,6 @@ def generate_excel_report():
             d["conversion_potential_score"]
         ])
 
-    # Sheet 5: Marketing Effectiveness Report
     ws5 = wb.create_sheet("Marketing Effectiveness")
     ws5.append(["Shelf", "Compared Count", "Purchased Count", "Marketing Effectiveness (%)"])
     for cell in ws5[1]:
@@ -350,7 +391,6 @@ def generate_excel_report():
             d["marketing_effectiveness_score"]
         ])
 
-    # Sheet 6: Shopper Segment Breakdown (Excel version - uses worksheet, not 'elements')
     ws6 = wb.create_sheet("Shopper Segments")
     ws6.append(["Shopper Segment", "Count"])
     for cell in ws6[1]:
@@ -360,6 +400,30 @@ def generate_excel_report():
     segment_counts = get_shopper_segment_counts()
     for seg, count in segment_counts.items():
         ws6.append([seg, count])
+
+    # Sheet 7: Behavior Intelligence (movement, pattern, routes)
+    movement, pattern, most_frequent_routes, least_frequent_routes = get_behavior_intelligence_data()
+    ws7 = wb.create_sheet("Behavior Intelligence")
+    ws7.append(["Shopper Type", "Avg Zones Visited", "Avg Dwell Time (s)"])
+    for cell in ws7[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="333333", end_color="333333", fill_type="solid")
+    all_segments = set(movement.keys()) | set(pattern.keys())
+    for seg in all_segments:
+        ws7.append([seg, movement.get(seg, 0), pattern.get(seg, 0)])
+
+    ws7.append([])
+    ws7.append(["Most Frequent Routes"])
+    ws7.append(["From", "To", "Frequency"])
+    for (from_z, to_z), count in most_frequent_routes:
+        ws7.append([from_z, to_z, count])
+
+    if least_frequent_routes:
+        ws7.append([])
+        ws7.append(["Least Frequent Routes"])
+        ws7.append(["From", "To", "Frequency"])
+        for (from_z, to_z), count in least_frequent_routes:
+            ws7.append([from_z, to_z, count])
 
     wb.save(filepath)
     return filepath
