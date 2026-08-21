@@ -311,7 +311,7 @@ function VideoAnalysis() {
               </tbody>
             </table>
 
-            <h3>Attention Heatmaps for This Video</h3>
+            <h3>Attention Heatmaps</h3>
             <div className="video-heatmaps-grid">
               <img src={`http://127.0.0.1:8000/heatmaps/heatmap_1_store.png?t=${Date.now()}`} alt="Store heatmap" />
               <img src={`http://127.0.0.1:8000/heatmaps/heatmap_2_shelves.png?t=${Date.now()}`} alt="Shelf heatmap" />
