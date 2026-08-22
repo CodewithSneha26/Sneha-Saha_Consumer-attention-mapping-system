@@ -126,3 +126,27 @@
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(30, 100, 160, 0.08);
 }
+
+
+.user-row-with-action span:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.delete-user-btn {
+  background: #fdecec;
+  color: #e05252;
+  border: none;
+  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-user-btn:hover {
+  background: #e05252;
+  color: #ffffff;
+}

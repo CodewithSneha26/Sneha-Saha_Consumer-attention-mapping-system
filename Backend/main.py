@@ -697,3 +697,38 @@ def analyze_video_full(file: UploadFile = File(...), clear_previous_data: bool =
         "pdf_report_url": "/reports/pdf",
         "excel_report_url": "/reports/excel"
     }
+
+    
+@app.get("/store-traffic-summary")
+def get_store_traffic_summary(db: Session = Depends(get_db)):
+    total_position_points = db.query(models.PositionPoint).count()
+    unique_visitors = db.query(models.AttentionRecord.person_track_id).distinct().count()
+    total_attention_records = db.query(models.AttentionRecord).count()
+
+    attentive = db.query(models.AttentionRecord).filter(
+        models.AttentionRecord.attention_status == "Attentive"
+    ).count()
+
+    attentive_rate = round((attentive / total_attention_records * 100), 1) if total_attention_records > 0 else 0
+
+    return {
+        "unique_visitors": unique_visitors,
+        "total_movement_points": total_position_points,
+        "total_tracked_events": total_attention_records,
+        "attentive_rate_percent": attentive_rate
+    }
+
+    
+@app.get("/users")
+def get_all_users(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    return [{"id": u.id, "name": u.name, "email": u.email, "role": u.role} for u in users]
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return {"status": "User deleted successfully"}

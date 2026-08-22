@@ -6,6 +6,7 @@ import { getCurrentUser } from '../api/userService';
 import './RoleDashboard.css';
 
 function StoreManagerDashboard() {
+  const [traffic, setTraffic] = useState(null);
   const [user, setUser] = useState(null);
   const [scores, setScores] = useState({});
   const [alerts, setAlerts] = useState([]);
@@ -24,10 +25,12 @@ function StoreManagerDashboard() {
       getCurrentUser(),
       api.get('/shelf-scores'),
       api.get('/alerts'),
-    ]).then(([userData, scoresRes, alertsRes]) => {
+      api.get('/store-traffic-summary'),
+    ]).then(([userData, scoresRes, alertsRes, trafficRes]) => {
       setUser(userData);
       setScores(scoresRes.data);
       setAlerts(alertsRes.data);
+      setTraffic(trafficRes.data);
       setLoading(false);
     }).catch((err) => {
       console.error(err);
@@ -66,6 +69,23 @@ function StoreManagerDashboard() {
                 <span className="stat-value alert-number">{criticalAlerts}</span>
               </div>
             </div>
+            <h3>Store Traffic Analytics</h3>
+            {traffic && (
+              <div className="stats-row">
+                <div className="stat-box">
+                  <span className="stat-label">Unique Visitors Tracked</span>
+                  <span className="stat-value">{traffic.unique_visitors}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">Movement Points Recorded</span>
+                  <span className="stat-value">{traffic.total_movement_points}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">Attentive Rate</span>
+                  <span className="stat-value">{traffic.attentive_rate_percent}%</span>
+                </div>
+              </div>
+            )}
             <h3>Shelf Performance Reports</h3>
             <div className="report-table">
               <div className="report-row header-row">

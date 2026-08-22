@@ -7,6 +7,7 @@ import './RoleDashboard.css';
 
 function AdminDashboard() {
   const [user, setUser] = useState(null);
+  const [users, setUsers] = useState([]);
   const [stores, setStores] = useState([]);
   const [cameras, setCameras] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -19,23 +20,36 @@ function AdminDashboard() {
       navigate('/login');
       return;
     }
-
-    Promise.all([
+    
+      Promise.all([
       getCurrentUser(),
       api.get('/stores'),
       api.get('/cameras'),
       api.get('/alerts'),
-    ]).then(([userData, storesRes, camerasRes, alertsRes]) => {
+      api.get('/users'),
+    ]).then(([userData, storesRes, camerasRes, alertsRes, usersRes]) => {
       setUser(userData);
       setStores(storesRes.data);
       setCameras(camerasRes.data);
       setAlerts(alertsRes.data);
+      setUsers(usersRes.data);
       setLoading(false);
     }).catch((err) => {
       console.error(err);
       setLoading(false);
     });
   }, [navigate]);
+
+  
+  const handleDeleteUser = async (id, name) => {
+    if (!window.confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/users/${id}`);
+      setUsers(users.filter(u => u.id !== id));
+    } catch (err) {
+      alert('Failed to delete user.');
+    }
+  };
 
   const platformAlerts = alerts.filter(a => a.alert_type === 'Platform Notification');
   const cameraAlerts = alerts.filter(a => a.alert_type === 'Camera Health');
@@ -66,6 +80,24 @@ function AdminDashboard() {
               </div>
             </div>
 
+            <h3>User Management</h3>
+            <div className="report-table">
+              <div className="report-row header-row">
+                <span>Name</span>
+                <span>Email</span>
+                <span>Role</span>
+              </div>
+              {users.map((u) => (
+                <div key={u.id} className="report-row user-row-with-action">
+                  <span>{u.name}</span>
+                  <span>{u.email}</span>
+                  <span>
+                    {u.role}
+                    <button className="delete-user-btn" onClick={() => handleDeleteUser(u.id, u.name)}>✕</button>
+                  </span>
+                </div>
+              ))}
+            </div>
             <h3>Platform Analytics</h3>
             <div className="admin-table">
               {platformAlerts.map((a) => (
