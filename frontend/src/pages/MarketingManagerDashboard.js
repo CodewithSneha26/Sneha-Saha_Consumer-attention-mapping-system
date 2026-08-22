@@ -9,6 +9,7 @@ function MarketingManagerDashboard() {
   const [user, setUser] = useState(null);
   const [scores, setScores] = useState({});
   const [recommendations, setRecommendations] = useState([]);
+  const [traffic, setTraffic] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -23,10 +24,12 @@ function MarketingManagerDashboard() {
       getCurrentUser(),
       api.get('/shelf-scores'),
       api.get('/recommendations'),
-    ]).then(([userData, scoresRes, recsRes]) => {
+      api.get('/store-traffic-summary'),
+    ]).then(([userData, scoresRes, recsRes, trafficRes]) => {
       setUser(userData);
       setScores(scoresRes.data);
       setRecommendations(recsRes.data);
+      setTraffic(trafficRes.data);
       setLoading(false);
     }).catch((err) => {
       console.error(err);
@@ -66,6 +69,23 @@ function MarketingManagerDashboard() {
               ))}
             </div>
 
+            <h3>Customer Engagement Metrics</h3>
+            {traffic && (
+              <div className="stats-row">
+                <div className="stat-box">
+                  <span className="stat-label">Unique Customers Engaged</span>
+                  <span className="stat-value">{traffic.unique_visitors}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">Attentive Engagement Rate</span>
+                  <span className="stat-value">{traffic.attentive_rate_percent}%</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">Total Tracked Interactions</span>
+                  <span className="stat-value">{traffic.total_tracked_events}</span>
+                </div>
+              </div>
+            )}
             <h3>Promotional Placement Suggestions</h3>
             <div className="report-table">
               {promoRecs.length === 0 ? (

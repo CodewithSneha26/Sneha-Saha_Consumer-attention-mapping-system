@@ -7,6 +7,7 @@ import './RoleDashboard.css';
 
 function RetailAnalystDashboard() {
   const [user, setUser] = useState(null);
+  const [shoppers, setShoppers] = useState([]);
   const [scores, setScores] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -21,9 +22,11 @@ function RetailAnalystDashboard() {
     Promise.all([
       getCurrentUser(),
       api.get('/shelf-scores'),
-    ]).then(([userData, scoresRes]) => {
+      api.get('/behavior-analysis-all'),
+    ]).then(([userData, scoresRes, behaviorRes]) => {
       setUser(userData);
       setScores(scoresRes.data);
+      setShoppers(behaviorRes.data);
       setLoading(false);
     }).catch((err) => {
       console.error(err);
@@ -59,9 +62,37 @@ function RetailAnalystDashboard() {
             </div>
 
             <h3>Attention Heatmaps</h3>
-            <p className="welcome-text">
-              View detailed attention heatmaps on the <a href="/heatmaps" style={{ color: '#1c7bb0' }}>Heatmaps page</a>.
-            </p>
+            <div className="mini-heatmap-grid">
+              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_1_store.png?t=${Date.now()}`} alt="Store heatmap" />
+              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_2_shelves.png?t=${Date.now()}`} alt="Shelf heatmap" />
+            </div>
+
+            <h3>Consumer Behavior Analytics</h3>
+            <div className="stats-row">
+              {['Explorer', 'Quick Buyer', 'Comparison Shopper', 'Impulse Buyer', 'Brand Loyal Customer'].map((seg) => {
+                const count = shoppers.filter(s => s.segment === seg).length;
+                return (
+                  <div key={seg} className="stat-box">
+                    <span className="stat-label">{seg}</span>
+                    <span className="stat-value">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <h3>Customer Journey Analytics</h3>
+            <div className="report-table">
+              <div className="report-row header-row">
+                <span>Person ID</span>
+                <span>Journey Path</span>
+              </div>
+              {shoppers.filter(s => s.journey_path && s.journey_path.length > 0).slice(0, 6).map((s, idx) => (
+                <div key={idx} className="report-row">
+                  <span>#{s.person_track_id}</span>
+                  <span>{s.journey_path.join(' → ')}</span>
+                </div>
+              ))}
+            </div>
 
             <h3>Product Attractiveness Reports</h3>
             <div className="report-table">
