@@ -32,3 +32,7 @@ Backend/heatmap_1_store.png
 Backend/heatmap_2_shelves.png
 Backend/heatmap_3_product_attention.png
 Backend/heatmap_4_traffic.png
+
+
+# Unrelated Salesforce CLI metadata cache (not part of this project)
+.sf/
