@@ -62,10 +62,9 @@ function RetailAnalystDashboard() {
             </div>
 
             <h3>Attention Heatmaps</h3>
-            <div className="mini-heatmap-grid">
-              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_1_store.png?t=${Date.now()}`} alt="Store heatmap" />
-              <img src={`http://127.0.0.1:8000/heatmaps/heatmap_2_shelves.png?t=${Date.now()}`} alt="Shelf heatmap" />
-            </div>
+            <p className="welcome-text">
+              Full heatmap visualizations with explanations are available on the <a href="/heatmaps" style={{ color: '#1c7bb0' }}>Heatmaps page</a>.
+            </p>
 
             <h3>Consumer Behavior Analytics</h3>
             <div className="stats-row">
