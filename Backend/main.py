@@ -732,3 +732,45 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"status": "User deleted successfully"}
+
+
+@app.get("/executive-summary")
+def get_executive_summary(db: Session = Depends(get_db)):
+    total_stores = db.query(models.Store).count()
+    total_shelves = db.query(models.Shelf).count()
+    total_cameras = db.query(models.Camera).count()
+
+    scores = scoring_engine.calculate_shelf_scores()
+    if scores:
+        avg_score = round(sum(d["attractiveness_score"] for d in scores.values()) / len(scores), 1)
+        sorted_shelves = sorted(scores.items(), key=lambda x: x[1]["attractiveness_score"], reverse=True)
+        top_shelves = [{"shelf": s[0], "score": s[1]["attractiveness_score"]} for s in sorted_shelves[:3]]
+        bottom_shelves = [{"shelf": s[0], "score": s[1]["attractiveness_score"]} for s in sorted_shelves[-3:]]
+    else:
+        avg_score = 0
+        top_shelves = []
+        bottom_shelves = []
+
+    unique_shoppers = db.query(models.AttentionRecord.person_track_id).distinct().count()
+
+    alerts = db.query(models.Alert).all()
+    critical_alerts = sum(1 for a in alerts if a.severity in ["High", "Critical"])
+
+    total_purchases = sum(
+        1 for i in db.query(models.ProductInteraction).all()
+        if "Purchased" in i.interaction_type
+    )
+
+    return {
+        "total_stores": total_stores,
+        "total_shelves": total_shelves,
+        "total_cameras": total_cameras,
+        "average_shelf_score": avg_score,
+        "top_shelves": top_shelves,
+        "bottom_shelves": bottom_shelves,
+        "unique_shoppers_tracked": unique_shoppers,
+        "total_alerts": len(alerts),
+        "critical_alerts": critical_alerts,
+        "total_purchases": total_purchases,
+        "shelf_scores": scores
+    }

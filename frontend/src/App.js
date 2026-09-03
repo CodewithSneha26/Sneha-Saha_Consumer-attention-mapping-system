@@ -14,6 +14,7 @@ import RetailAnalystDashboard from './pages/RetailAnalystDashboard';
 import MarketingManagerDashboard from './pages/MarketingManagerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
+import ExecutiveDashboard from './pages/ExecutiveDashboard';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/shelf-detection" element={<ShelfDetection />} />
           <Route path="/shelf-detail/:shelfName" element={<ShelfDetail />} />
           <Route path="/video-analysis" element={<VideoAnalysis />} />
+          <Route path="/executive-dashboard" element={<ExecutiveDashboard />} />
         </Routes>
         </div>
       </Router>

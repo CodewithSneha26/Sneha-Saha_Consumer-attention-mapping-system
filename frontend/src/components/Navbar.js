@@ -32,6 +32,7 @@ function Navbar() {
       <div className="navbar-brand">Consumer Attention Mapping</div>
       <nav className="navbar-links">
         <Link to={dashboardPath} className={isActive(dashboardPath) ? 'active' : ''}>Dashboard</Link>
+        <Link to="/executive-dashboard" className={isActive('/executive-dashboard') ? 'active' : ''}>Executive</Link>
         <Link to="/stores" className={isActive('/stores') ? 'active' : ''}>Stores & Shelves</Link>
         <Link to="/analytics" className={isActive('/analytics') ? 'active' : ''}>Analytics</Link>
         <Link to="/heatmaps" className={isActive('/heatmaps') ? 'active' : ''}>Heatmaps</Link>
