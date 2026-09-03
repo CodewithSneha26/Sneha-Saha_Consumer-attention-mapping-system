@@ -744,8 +744,12 @@ def get_executive_summary(db: Session = Depends(get_db)):
     if scores:
         avg_score = round(sum(d["attractiveness_score"] for d in scores.values()) / len(scores), 1)
         sorted_shelves = sorted(scores.items(), key=lambda x: x[1]["attractiveness_score"], reverse=True)
-        top_shelves = [{"shelf": s[0], "score": s[1]["attractiveness_score"]} for s in sorted_shelves[:3]]
-        bottom_shelves = [{"shelf": s[0], "score": s[1]["attractiveness_score"]} for s in sorted_shelves[-3:]]
+        num_shelves = len(sorted_shelves)
+        top_count = min(3, num_shelves)
+        bottom_count = min(3, num_shelves - top_count)  # avoid overlap when few shelves exist
+
+        top_shelves = [{"shelf": s[0], "score": s[1]["attractiveness_score"]} for s in sorted_shelves[:top_count]]
+        bottom_shelves = [{"shelf": s[0], "score": s[1]["attractiveness_score"]} for s in sorted_shelves[-bottom_count:]] if bottom_count > 0 else []
     else:
         avg_score = 0
         top_shelves = []
