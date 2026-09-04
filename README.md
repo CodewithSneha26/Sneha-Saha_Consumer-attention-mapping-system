@@ -37,6 +37,7 @@ An AI-powered retail analytics platform that uses computer vision to track shopp
 6. Create a `.env` file with your `DATABASE_URL`
 7. Run the server: `uvicorn main:app --reload`
 8. Access API docs at `http://127.0.0.1:8000/docs`
+9. In frontend terminal, run cd frontend and then run npm start to visualize the project
 
 ## API Endpoints
 - `/register`, `/login` - Authentication
