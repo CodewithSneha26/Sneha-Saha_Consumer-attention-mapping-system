@@ -10,10 +10,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Legend
+  ResponsiveContainer
 } from 'recharts';
 
 import './ExecutiveDashboard.css';
@@ -21,8 +18,6 @@ import './ExecutiveDashboard.css';
 function ExecutiveDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [trends, setTrends] = useState(null);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,19 +28,15 @@ function ExecutiveDashboard() {
       return;
     }
 
-    Promise.all([
-      api.get('/executive-summary'),
-      api.get('/trends-over-time'),
-    ])
-      .then(([summaryRes, trendsRes]) => {
-        setData(summaryRes.data);
-        setTrends(trendsRes.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    api.get('/executive-summary')
+  .then((res) => {
+    setData(res.data);
+    setLoading(false);
+  })
+  .catch((err) => {
+    console.error(err);
+    setLoading(false);
+  });
   }, [navigate]);
 
   return (
@@ -289,96 +280,6 @@ function ExecutiveDashboard() {
                 ))}
 
               </div>
-
-            </div>
-
-            <h3>Trends Over Time</h3>
-
-            <div className="exec-chart-card">
-
-              {!trends || !trends.has_multiple_sessions ? (
-
-                <p className="trend-empty-note">
-                  📈 Only one analysis session recorded so far.
-                  Run video analysis on different days to see trends
-                  build up over time.
-                </p>
-
-              ) : (
-
-                <ResponsiveContainer
-                  width="100%"
-                  height={280}
-                >
-
-                  <LineChart
-                    data={trends.trend_data}
-                  >
-
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#eef2f6"
-                    />
-
-                    <XAxis
-                      dataKey="date"
-                      tick={{
-                        fontSize: 11
-                      }}
-                    />
-
-                    <YAxis
-                      tick={{
-                        fontSize: 11
-                      }}
-                    />
-
-                    <Tooltip />
-
-                    <Legend
-                      wrapperStyle={{
-                        fontSize: 12
-                      }}
-                    />
-
-
-                    {/* ATTENTION TIME */}
-
-                    <Line
-                      type="monotone"
-                      dataKey="total_attention_seconds"
-                      name="Attention Time (s)"
-                      stroke="#1c7bb0"
-                      strokeWidth={2}
-                    />
-
-
-                    {/* INTERACTIONS */}
-
-                    <Line
-                      type="monotone"
-                      dataKey="total_interactions"
-                      name="Interactions"
-                      stroke="#1f9d55"
-                      strokeWidth={2}
-                    />
-
-
-                    {/* PURCHASES */}
-
-                    <Line
-                      type="monotone"
-                      dataKey="total_purchases"
-                      name="Purchases"
-                      stroke="#f2a35c"
-                      strokeWidth={2}
-                    />
-
-                  </LineChart>
-
-                </ResponsiveContainer>
-
-              )}
 
             </div>
 
