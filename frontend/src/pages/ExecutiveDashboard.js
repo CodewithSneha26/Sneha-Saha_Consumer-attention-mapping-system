@@ -2,23 +2,44 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/axiosConfig';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Legend
+} from 'recharts';
+
 import './ExecutiveDashboard.css';
 
 function ExecutiveDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [trends, setTrends] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+
     if (!token) {
       navigate('/login');
       return;
     }
-    api.get('/executive-summary')
-      .then((res) => {
-        setData(res.data);
+
+    Promise.all([
+      api.get('/executive-summary'),
+      api.get('/trends-over-time'),
+    ])
+      .then(([summaryRes, trendsRes]) => {
+        setData(summaryRes.data);
+        setTrends(trendsRes.data);
         setLoading(false);
       })
       .catch((err) => {
@@ -30,82 +51,340 @@ function ExecutiveDashboard() {
   return (
     <div className="exec-page">
       <Navbar />
+
       <main className="exec-content">
+
         <h2>Executive Dashboard</h2>
-        <p className="exec-subtitle">A high-level summary of overall system performance, across all stores and shelves.</p>
+
+        <p className="exec-subtitle">
+          A high-level summary of overall system performance, across all stores and shelves.
+        </p>
 
         {loading || !data ? (
           <p>Loading...</p>
         ) : (
           <>
             <div className="exec-stats-row">
+
               <div className="exec-stat-box">
-                <span className="exec-stat-value">{data.total_stores}</span>
-                <span className="exec-stat-label">Stores</span>
+                <span className="exec-stat-value">
+                  {data.total_stores}
+                </span>
+
+                <span className="exec-stat-label">
+                  Stores
+                </span>
               </div>
+
+
               <div className="exec-stat-box">
-                <span className="exec-stat-value">{data.total_shelves}</span>
-                <span className="exec-stat-label">Shelves</span>
+                <span className="exec-stat-value">
+                  {data.total_shelves}
+                </span>
+
+                <span className="exec-stat-label">
+                  Shelves
+                </span>
               </div>
+
+
               <div className="exec-stat-box">
-                <span className="exec-stat-value">{data.total_cameras}</span>
-                <span className="exec-stat-label">Cameras</span>
+                <span className="exec-stat-value">
+                  {data.total_cameras}
+                </span>
+
+                <span className="exec-stat-label">
+                  Cameras
+                </span>
               </div>
+
+
               <div className="exec-stat-box highlight">
-                <span className="exec-stat-value">{data.average_shelf_score}</span>
-                <span className="exec-stat-label">Avg. Shelf Score</span>
+                <span className="exec-stat-value">
+                  {data.average_shelf_score}
+                </span>
+
+                <span className="exec-stat-label">
+                  Avg. Shelf Score
+                </span>
               </div>
+
+
               <div className="exec-stat-box">
-                <span className="exec-stat-value">{data.unique_shoppers_tracked}</span>
-                <span className="exec-stat-label">Shoppers Tracked</span>
+                <span className="exec-stat-value">
+                  {data.unique_shoppers_tracked}
+                </span>
+
+                <span className="exec-stat-label">
+                  Shoppers Tracked
+                </span>
               </div>
+
+
               <div className="exec-stat-box alert-box">
-                <span className="exec-stat-value">{data.critical_alerts}</span>
-                <span className="exec-stat-label">Critical Alerts</span>
+                <span className="exec-stat-value">
+                  {data.critical_alerts}
+                </span>
+
+                <span className="exec-stat-label">
+                  Critical Alerts
+                </span>
               </div>
+
             </div>
 
             <h3>Overall Shelf Performance</h3>
+
             <div className="exec-chart-card">
-              <ResponsiveContainer width="100%" height={Object.keys(data.shelf_scores).length * 60}>
+
+              <ResponsiveContainer
+                width="100%"
+                height={Object.keys(data.shelf_scores).length * 60}
+              >
+
                 <BarChart
                   layout="vertical"
-                  data={Object.entries(data.shelf_scores).map(([shelf, d]) => ({
-                    shelf, Score: d.attractiveness_score
-                  }))}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+
+                  data={Object.entries(data.shelf_scores).map(
+                    ([shelf, d]) => ({
+                      shelf,
+                      Score: d.attractiveness_score
+                    })
+                  )}
+
+                  margin={{
+                    top: 10,
+                    right: 30,
+                    left: 10,
+                    bottom: 10
+                  }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                  <YAxis type="category" dataKey="shelf" width={170} tick={{ fontSize: 12, fill: '#14324d' }} />
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#eef2f6"
+                    horizontal={false}
+                  />
+
+                  <XAxis
+                    type="number"
+                    domain={[0, 100]}
+                    tick={{ fontSize: 12 }}
+                  />
+
+                  <YAxis
+                    type="category"
+                    dataKey="shelf"
+                    width={170}
+                    tick={{
+                      fontSize: 12,
+                      fill: '#14324d'
+                    }}
+                  />
+
                   <Tooltip />
-                  <Bar dataKey="Score" fill="#1c7bb0" radius={[0, 4, 4, 0]} barSize={16} />
+
+                  <Bar
+                    dataKey="Score"
+                    fill="#1c7bb0"
+                    radius={[0, 4, 4, 0]}
+                    barSize={16}
+                  />
+
                 </BarChart>
+
               </ResponsiveContainer>
+
             </div>
 
             <div className="exec-two-col">
+
+              {/* TOP PERFORMING SHELVES */}
+
               <div className="exec-col-card">
-                <h3>🏆 Top Performing Shelves</h3>
+
+                <h3>
+                  🏆 Top Performing Shelves
+                </h3>
+
                 {data.top_shelves.map((s, i) => (
-                  <div key={i} className="exec-rank-row top">
-                    <span>#{i + 1} {s.shelf}</span>
-                    <strong>{s.score}</strong>
+
+                  <div
+                    key={i}
+                    className="exec-rank-bar-row"
+                  >
+
+                    <div className="exec-rank-bar-label">
+
+                      <span>
+                        #{i + 1} {s.shelf}
+                      </span>
+
+                      <strong className="score-good">
+                        {s.score}
+                      </strong>
+
+                    </div>
+
+
+                    <div className="exec-bar-track">
+
+                      <div
+                        className="exec-bar-fill top-fill"
+                        style={{
+                          width: `${s.score}%`
+                        }}
+                      />
+
+                    </div>
+
                   </div>
+
                 ))}
+
               </div>
+
+
+              {/* NEEDS ATTENTION */}
+
               <div className="exec-col-card">
-                <h3>⚠️ Needs Attention</h3>
+
+                <h3>
+                  ⚠️ Needs Attention
+                </h3>
+
                 {data.bottom_shelves.map((s, i) => (
-                  <div key={i} className="exec-rank-row bottom">
-                    <span>{s.shelf}</span>
-                    <strong>{s.score}</strong>
+
+                  <div
+                    key={i}
+                    className="exec-rank-bar-row"
+                  >
+
+                    <div className="exec-rank-bar-label">
+
+                      <span>
+                        {s.shelf}
+                      </span>
+
+                      <strong className="score-bad">
+                        {s.score}
+                      </strong>
+
+                    </div>
+
+
+                    <div className="exec-bar-track">
+
+                      <div
+                        className="exec-bar-fill bottom-fill"
+                        style={{
+                          width: `${s.score}%`
+                        }}
+                      />
+
+                    </div>
+
                   </div>
+
                 ))}
+
               </div>
+
             </div>
+
+            <h3>Trends Over Time</h3>
+
+            <div className="exec-chart-card">
+
+              {!trends || !trends.has_multiple_sessions ? (
+
+                <p className="trend-empty-note">
+                  📈 Only one analysis session recorded so far.
+                  Run video analysis on different days to see trends
+                  build up over time.
+                </p>
+
+              ) : (
+
+                <ResponsiveContainer
+                  width="100%"
+                  height={280}
+                >
+
+                  <LineChart
+                    data={trends.trend_data}
+                  >
+
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#eef2f6"
+                    />
+
+                    <XAxis
+                      dataKey="date"
+                      tick={{
+                        fontSize: 11
+                      }}
+                    />
+
+                    <YAxis
+                      tick={{
+                        fontSize: 11
+                      }}
+                    />
+
+                    <Tooltip />
+
+                    <Legend
+                      wrapperStyle={{
+                        fontSize: 12
+                      }}
+                    />
+
+
+                    {/* ATTENTION TIME */}
+
+                    <Line
+                      type="monotone"
+                      dataKey="total_attention_seconds"
+                      name="Attention Time (s)"
+                      stroke="#1c7bb0"
+                      strokeWidth={2}
+                    />
+
+
+                    {/* INTERACTIONS */}
+
+                    <Line
+                      type="monotone"
+                      dataKey="total_interactions"
+                      name="Interactions"
+                      stroke="#1f9d55"
+                      strokeWidth={2}
+                    />
+
+
+                    {/* PURCHASES */}
+
+                    <Line
+                      type="monotone"
+                      dataKey="total_purchases"
+                      name="Purchases"
+                      stroke="#f2a35c"
+                      strokeWidth={2}
+                    />
+
+                  </LineChart>
+
+                </ResponsiveContainer>
+
+              )}
+
+            </div>
+
           </>
         )}
+
       </main>
     </div>
   );
