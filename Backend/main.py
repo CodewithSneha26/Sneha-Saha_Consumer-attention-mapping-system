@@ -1438,12 +1438,12 @@ def process_video_job(
         )
 
         face_cascade = cv2.CascadeClassifier(
-            "haarcascade_frontalface_default.xml"
-        )
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+)
 
         eye_cascade = cv2.CascadeClassifier(
-            "haarcascade_eye.xml"
-        )
+        cv2.data.haarcascades + "haarcascade_eye.xml"
+)
 
         # ====================================================
         # 4. OPEN VIDEO
