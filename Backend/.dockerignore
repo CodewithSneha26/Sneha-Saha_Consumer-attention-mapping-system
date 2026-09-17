@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+.pytest_cache/
+uploaded_videos/
+uploaded_images/
+generated_reports/
+*.pyc
+*.pyo
+.env
+heatmap_*.png

@@ -1,0 +1,16 @@
+Backend/venv/
+Backend/__pycache__/
+Backend/.pytest_cache/
+Backend/uploaded_videos/
+Backend/uploaded_images/
+Backend/generated_reports/
+Backend/*.pyc
+Backend/*.pyo
+Backend/.env
+Backend/heatmap_*.png
+frontend/node_modules/
+frontend/build/
+.sf/
+runs/
+*.dump
+*.backup
